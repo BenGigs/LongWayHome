@@ -160,6 +160,53 @@ namespace LongWayHome.Tests
         }
 
         [UnityTest]
+        public IEnumerator NearMissDescentCatchRequiresGrabAndClearReach()
+        {
+            Player.enabled = false;
+            var body = Player.GetComponent<Rigidbody>();
+            body.position = Shaft + Vector3.up * 3.65f;
+            body.linearVelocity = Vector3.down * 2;
+            yield return new WaitForFixedUpdate();
+            yield return null;
+            var view = Player.GetComponentInChildren<Camera>().transform;
+            var hand = Player.GetComponentsInChildren<HandInteractor>()[0];
+            Vector3 nearRing = Shaft + new Vector3(0, 3.02f, -.80f);
+            view.LookAt(nearRing);
+            Assert.That(hand.IsHolding, Is.False, "Passing a ring alone must not auto-catch.");
+            bool exact = UnityEngine.Physics.Raycast(view.position, view.forward, out var direct, 1.8f, 1) &&
+                direct.collider.GetComponentInParent<LedgeRing>() != null;
+            Assert.That(exact, Is.False, "Exercise a genuine aiming miss.");
+            Assert.That(hand.TryGrab(), Is.True, "A nearby visible ring should tolerate this aiming miss.");
+            Assert.That(hand.HeldLedge.transform.position.y, Is.EqualTo(3.2f).Within(.01f));
+            hand.Release();
+
+            var blocker = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            blocker.transform.position = view.position + view.forward * .45f;
+            blocker.transform.localScale = Vector3.one * .65f;
+            UnityEngine.Physics.SyncTransforms();
+            Assert.That(hand.TryGrab(), Is.False, "Aim assistance cannot see through a blocker.");
+            Object.Destroy(blocker);
+            yield return null;
+            view.rotation = Quaternion.LookRotation(Vector3.up);
+            Assert.That(hand.TryGrab(), Is.False, "The next deck above is beyond reach.");
+        }
+
+        [UnityTest]
+        public IEnumerator PullUpBuildsSpeedGradually()
+        {
+            Player.enabled = false;
+            yield return Catch(0, 1);
+            yield return new WaitForSeconds(.8f);
+            var body = Player.GetComponent<Rigidbody>();
+            Player.GetComponent<PlayerMovement>().SetMovement(Vector2.up);
+            yield return new WaitForFixedUpdate();
+            yield return new WaitForFixedUpdate();
+            Assert.That(body.linearVelocity.y, Is.InRange(.05f, .85f), "Start the pull with an eased acceleration (including test coroutine scheduling).");
+            yield return new WaitForSeconds(.3f);
+            Assert.That(body.linearVelocity.y, Is.GreaterThan(1.3f), "Ease-in must still reach a useful climbing speed.");
+        }
+
+        [UnityTest]
         public IEnumerator PullUpCannotPassThroughAnObstruction()
         {
             Player.enabled = false;

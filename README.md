@@ -14,11 +14,16 @@ Scenes, input references, player prefab and URP settings are already generated a
 
 ## Five-deck gameplay playtest
 
+Latest tuning build: `Builds/WindowsSmooth/TheLongWayHome.exe` (separate from the prior playtest). Rebuild with the batch Editor entry point `LongWayHome.Editor.FoundationSetup.BuildSmoothPlaytest`.
+
+Tuning verification: 22/23 checks passed in `TestResults/smooth-playmode.xml`; the new ease-in test's initial timing bound was corrected for coroutine scheduling, then passed in `TestResults/smooth-ramp.xml`. Runtime code was unchanged between runs. These cover all 23 behaviors, including near-miss descent acquisition, blocked/out-of-reach rejection, four-deck ascent and free falls. Windows development build succeeded with Editor exit code 0 (`TestResults/smooth-build.log`). Human review of the new feel remains pending.
+
 Start in fuel/storage on the bottom deck. The orange ring above the open hatch is the next grab target. No poles, stairs, doors, guardrails or fall damage are included.
 
 1. Aim up at the orange ring, hold either mouse button, then press Space to jump. A held grab button retries while the target comes within reach. Floor collision still blocks grabs through solid deck surfaces.
 2. Keep the grab button held to hang. Hold **W** to pull into the opening, rise above the floor, and move onto its edge. Releasing W pauses the pull; releasing your grip lets you fall.
 3. On landing, release W before walking again. Your grip stays held until you release its mouse button. Let go before jumping to the next ring. Repeat through habitat/water, workshop/robot, navigation/open sleeping nook, and cockpit.
+   For descent, look toward the orange ring of the floor you want and hold a mouse button as it comes into reach. Ring targeting tolerates a near miss of up to 28 cm around the aim ray, with the same 1.8 m reach and solid-surface occlusion. Release both buttons to fall freely. Pull-ups now ease into motion and around the lip; release W to pause as before.
 4. Press **G** to coast. While holding a ring, look where you want to move and use WASD to pull. Release to drift; WASD in open space adds no thrust. Space pushes only from contact or a held ring.
 5. **R** resets the test scene. **Escape** pauses/resumes and releases the cursor. Try missed catches, letting go mid-pull, falling several decks, and toggling gravity while attached. Report clipping, uncomfortable camera motion or catches that feel unreliable.
 

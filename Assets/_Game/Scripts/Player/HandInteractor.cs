@@ -11,6 +11,8 @@ namespace LongWayHome.Player
         [SerializeField] private Vector3 restOffset = new Vector3(-0.25f, -0.25f, 0.65f);
         [SerializeField, Min(0.1f)] private float reach = 1.8f;
         [SerializeField] private LayerMask grabLayers = 1;
+        [SerializeField, Range(0f, .4f)] private float ledgeAimTolerance = .28f;
+        private readonly RaycastHit[] ledgeHits = new RaycastHit[64];
         private Grabbable held;
         private ConfigurableJoint joint;
         private Vector3 localAnchor;
@@ -53,9 +55,7 @@ namespace LongWayHome.Player
         public bool TryGrab()
         {
             if (!isActiveAndEnabled || held != null) return false;
-            // Raycast, not sphere cast: a wall must occlude anything behind it.
-            if (!UnityEngine.Physics.Raycast(view.position, view.forward, out RaycastHit hit,
-                    reach, grabLayers, QueryTriggerInteraction.Ignore)) return false;
+            if (!FindGrab(out RaycastHit hit)) return false;
             var candidate = hit.collider.GetComponentInParent<Grabbable>();
             var ledge = candidate != null ? candidate.GetComponentInParent<LedgeRing>() : null;
             // Upper ledges are caught from a jump/fall, not by reaching through a ceiling
@@ -103,6 +103,37 @@ namespace LongWayHome.Player
             }
             joint.enableCollision = false;
             return true;
+        }
+
+        private bool FindGrab(out RaycastHit hit)
+        {
+            // Precise targeting always wins, including loose objects and ordinary rails.
+            if (UnityEngine.Physics.Raycast(view.position, view.forward, out hit,
+                reach, grabLayers, QueryTriggerInteraction.Ignore) &&
+                hit.collider.GetComponentInParent<Grabbable>() != null) return true;
+
+            int count = UnityEngine.Physics.SphereCastNonAlloc(view.position, ledgeAimTolerance,
+                view.forward, ledgeHits, reach, grabLayers, QueryTriggerInteraction.Ignore);
+            float bestError = float.PositiveInfinity;
+            bool found = false;
+            for (int i = 0; i < count; i++)
+            {
+                var candidate = ledgeHits[i];
+                if (candidate.collider.GetComponentInParent<LedgeRing>() == null) continue;
+                Vector3 offset = candidate.point - view.position;
+                float distance = offset.magnitude;
+                if (distance < .001f || distance > reach || Vector3.Dot(offset, view.forward) <= 0) continue;
+                float error = Vector3.Angle(view.forward, offset);
+                if (error >= bestError) continue;
+                // A broad search never permits a grip through a wall or deck slab.
+                if (!UnityEngine.Physics.Raycast(view.position, offset / distance, out var visible,
+                    distance + .02f, grabLayers, QueryTriggerInteraction.Ignore) ||
+                    visible.collider != candidate.collider) continue;
+                bestError = error;
+                hit = visible;
+                found = true;
+            }
+            return found;
         }
 
         private void FixedUpdate()

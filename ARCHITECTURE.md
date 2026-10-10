@@ -8,6 +8,8 @@ Each ring has a LedgeRing defining the deck plane and radial hang/landing target
 
 GameplayReset reloads only the active test scene on R while unpaused. There is no fall damage in this playtest. Scientific resource/navigation systems and polished art remain outside this test.
 
+Ring aiming first uses the exact ray; if no grabbable is hit, a reusable sphere-cast buffer searches within 28 cm of that ray. Only LedgeRing colliders qualify, ranked by angular aiming error, within the original reach. A separate ray to the contact point must hit that same collider first. Acquisition still requires grab input; loose tools and ordinary rails retain precise targeting. Active pull velocity follows an exponential 0.16 s response to soften starts and changes of direction. Hanging/fall arrest and releasing W retain prompt braking; no free-flight forces are added.
+
 ## Foundation
 
 `Bootstrap` stays loaded and owns `SceneBootstrap`, which validates build scene availability, loads `ShipInterior` and `SpaceExterior` additively, then makes the interior active. No global singleton or DontDestroyOnLoad manager is needed. Start a normal session through Bootstrap. ShipInterior also works alone for quick movement inspection.

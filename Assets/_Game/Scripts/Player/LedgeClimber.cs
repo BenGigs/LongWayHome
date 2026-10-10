@@ -8,6 +8,7 @@ namespace LongWayHome.Player
         private enum Phase { None, Hanging, Rising, Crossing }
         [SerializeField, Min(0.1f)] private float climbSpeed = 2.4f;
         [SerializeField, Min(0.1f)] private float acceleration = 35f;
+        [SerializeField, Min(0.01f)] private float pullResponseTime = .16f;
         private Rigidbody body;
         private Phase phase;
         private LedgeRing ring;
@@ -68,6 +69,11 @@ namespace LongWayHome.Player
             }
             Vector3 desired = Vector3.ClampMagnitude((target - body.position) * 6f, climbSpeed);
             if (phase != Phase.Hanging && movement.y <= 0.5f) desired = Vector3.zero;
+            // Ease into pulling and around the lip without weakening the fall arrest.
+            // Pausing W still brakes promptly; smoothing only applies to active pulling.
+            if (phase != Phase.Hanging && movement.y > .5f)
+                desired = Vector3.Lerp(body.linearVelocity, desired,
+                    1f - Mathf.Exp(-Time.fixedDeltaTime / pullResponseTime));
             // Muscle reaction through the held ring; remains dynamic and collidable.
             // Never move the Transform, make the body kinematic, or disable collision.
             body.AddForce(-gravity, ForceMode.Acceleration);

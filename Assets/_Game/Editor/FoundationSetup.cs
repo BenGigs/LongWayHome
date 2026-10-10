@@ -160,8 +160,18 @@ namespace LongWayHome.Editor
 
         public static void BuildWindows()
         {
+            BuildWindowsTo("Builds/Windows/TheLongWayHome.exe");
+        }
+
+        public static void BuildSmoothPlaytest()
+        {
+            BuildWindowsTo("Builds/WindowsSmooth/TheLongWayHome.exe");
+        }
+
+        private static void BuildWindowsTo(string path)
+        {
             BuildReport report = BuildPipeline.BuildPlayer(EditorBuildSettings.scenes,
-                "Builds/Windows/TheLongWayHome.exe", BuildTarget.StandaloneWindows64, BuildOptions.Development);
+                path, BuildTarget.StandaloneWindows64, BuildOptions.Development);
             if (report.summary.result != BuildResult.Succeeded)
                 throw new InvalidOperationException("Windows build failed: " + report.summary.result);
             Debug.Log("FOUNDATION_WINDOWS_BUILD_OK");
