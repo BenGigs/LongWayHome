@@ -17,11 +17,11 @@ Scenes, input references, player prefab and URP settings are already generated a
 - **G**: toggle 1g acceleration / zero-g coasting. The `Ship acceleration` scene object's Inspector exposes the actual acceleration vector for intermediate and other directions.
 - **Hold left/right mouse** while aiming the crosshair at a tool or rail within 1.8 m: grab with the corresponding hand. Release the button to let go. Blue is left; amber is right.
 - **WASD**: walk while grounded. While holding a rail, pull in the camera's forward/right directions, including vertically when looking up/down. In free float, WASD adds no thrust.
-- **Space**: jump from the floor, or push away from a contacted static surface / held rail in zero-g. Pushing releases both hands. Space in open space does nothing.
+- **Space**: jump from the floor, or push away from a contacted static surface / held rail in zero-g. Jumping and pushing keep both grips; release each mouse button to let go. Floor jumps use a separate 4 m/s impulse (about 0.8 m rise at 1g when unobstructed). Space in open space does nothing.
 - The rail is to the left of the starting position. The wrench and sample canister sit on the right-hand shelf in the workshop, through the first hatch. Aim at each in turn to hold two different objects.
 - **Escape** pauses physics and releases the cursor. Resuming reconciles any grab buttons released while paused. **E** remains reserved for future consoles.
 
-Manual acceptance loop: walk and grab the rail; press G; look slightly up and hold W to pull; press Space to release/push away; observe drift without input thrust. Return to 1g, pick up the wrench and canister, coast, release a moving tool and observe inertia, then restore 1g and check that the objects settle. Repeat near walls and while holding both hands. Record jitter, clipping, excessive reach or uncomfortable camera motion during the layout playtest.
+Manual acceptance loop: walk and grab the rail; press G; look slightly up and hold W to pull; press Space to push while keeping your grip; release the mouse buttons to let go and observe drift without input thrust. Return to 1g, pick up the wrench and canister, coast, release a moving tool and observe inertia, then restore 1g and check that the objects settle. Repeat near walls and while holding both hands. Record jitter, clipping, excessive reach or uncomfortable camera motion during the layout playtest.
 
 The prototype uses simple hand markers, rail reach constraints and spring-driven tool grabs. Tools preserve their pickup orientation relative to the hand, follow camera turns, and regain free rotation on release. No full-body IK, production repair interaction, robot, navigation, survival or science clocks yet.
 
@@ -58,6 +58,12 @@ Test runs intentionally omit `-quit`: the test runner exits when complete. Read 
 
 ## Verification record
 
+Jump follow-up on 2026-10-10:
+
+- Space preserves rail and tool grips; mouse buttons control intentional release. Powered floor jumps now add 4 m/s separately from the unchanged 2.5 m/s zero-g push. Airborne rail movement no longer brakes the powered jump's vertical arc.
+- **15/15 PlayMode tests passed**, including a powered jump with a rail and tool held simultaneously, measured 0.65–0.95 m peak rise and return to deck, and zero-g rail push retaining both hands until mouse release. Results: `TestResults/jump-playmode.xml` and `TestResults/jump-playmode.log`.
+- **Windows x64 development build succeeded** with `FOUNDATION_WINDOWS_BUILD_OK` and Unity exit code 0 in `TestResults/jump-build.log`.
+- User selected an upright expedition ship with stacked decks and a warm cabin. The proposed Blender layout is recorded in GAME_DESIGN.md; no replacement ship model has been created yet.
 M3 blockout verification on 2026-10-10:
 
 - User accepted the corrected M2 movement feel before this layout work.

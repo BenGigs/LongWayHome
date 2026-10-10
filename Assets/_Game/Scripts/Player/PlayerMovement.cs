@@ -13,6 +13,7 @@ namespace LongWayHome.Player
         [SerializeField, Min(0f)] private float contactAcceleration = 12f;
         [SerializeField, Min(0f)] private float pullSpeed = 2f;
         [SerializeField, Min(0f)] private float pushSpeed = 2.5f;
+        [SerializeField, Min(0f)] private float jumpSpeed = 4f;
         [SerializeField] private LayerMask groundLayers = 1;
         private Rigidbody body;
         private ShipGravityBody gravityBody;
@@ -67,7 +68,10 @@ namespace LongWayHome.Player
             {
                 Vector3 desired = (view.forward * movement.y + view.right * movement.x) * pullSpeed;
                 // Reaction comes from the held static rail. No contact => no locomotion force.
-                body.AddForce(Vector3.ClampMagnitude(desired - body.linearVelocity,
+                Vector3 correction = desired - body.linearVelocity;
+                // A held rail must not brake the vertical arc of a powered jump.
+                if (powered) correction = Vector3.ProjectOnPlane(correction, up);
+                body.AddForce(Vector3.ClampMagnitude(correction,
                     contactAcceleration * Time.fixedDeltaTime), ForceMode.VelocityChange);
             }
         }
@@ -79,9 +83,8 @@ namespace LongWayHome.Player
             else if (!powered && HasRail) normal = leftHand != null && leftHand.IsAnchored ? leftHand.PushNormal : rightHand.PushNormal;
             else if (!powered && HasSurfaceContact()) normal = contactNormal;
             else return false;
-            leftHand?.Release();
-            rightHand?.Release();
-            body.AddForce(normal.normalized * pushSpeed, ForceMode.VelocityChange);
+            // Grip belongs to the grab buttons. Jumping never opens either hand.
+            body.AddForce(normal.normalized * (IsGrounded ? jumpSpeed : pushSpeed), ForceMode.VelocityChange);
             IsGrounded = false;
             return true;
         }

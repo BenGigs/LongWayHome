@@ -34,3 +34,5 @@ The previous M2 room is preserved as GravityPrototype.unity for comparison. Exis
 8. Lighting/audio/UI polish, performance, balancing and external playtesting of the 15–20 minute slice.
 
 Estimates in the original brief are preliminary. Full launch, extended galaxy, detailed orbital physics and broader survival remain post-slice features.
+
+M3 follow-up: user requested grip-preserving, stronger jumps and selected an upright expedition ship with stacked decks, a practical exterior and a warm cabin. The Blender design proposal is recorded in GAME_DESIGN.md. Review deck circulation and silhouette before replacing the current Unity blockout; M4 remains later work.
