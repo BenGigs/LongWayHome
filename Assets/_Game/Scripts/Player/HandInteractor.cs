@@ -213,7 +213,15 @@ namespace LongWayHome.Player
                 Vector3 anchor = Vector3.Lerp(playerBody.transform.TransformPoint(pickupLocal), view.TransformPoint(restOffset), retrieve);
                 Quaternion rotation = view.rotation * pickupRotation;
                 anchor = ResolveCarryAnchor(anchor, rotation, playerBody.transform.up);
-                carriedVisual.SetPositionAndRotation(anchor - rotation * Vector3.Scale(localAnchor, carriedVisual.localScale), rotation);
+                Vector3 position = anchor - rotation * Vector3.Scale(localAnchor, carriedVisual.localScale);
+                // Camera-relative rendering only hides small interpolation errors.
+                // Never show a fictional grip on the other side of a blocked deck.
+                if (Vector3.Distance(position, held.transform.position) > .12f)
+                {
+                    position = held.transform.position;
+                    rotation = held.transform.rotation;
+                }
+                carriedVisual.SetPositionAndRotation(position, rotation);
             }
             Vector3 target = carriedVisual != null ? VisibleGripPoint : held != null ? held.transform.TransformPoint(localAnchor) : view.TransformPoint(restOffset);
             if (held != null)
@@ -229,11 +237,13 @@ namespace LongWayHome.Player
         {
             Vector3 offset = rotation * Vector3.Scale(localAnchor, held.transform.lossyScale);
             Vector3 position = anchor - offset;
-            if (!CarryPenetration(position, rotation, out _)) return anchor;
+            if (!CarryPenetration(position, rotation, out Vector3 initialCorrection)) return anchor;
 
             // A nearby tabletop should lift the pack over its edge, not shorten the
             // arm toward the stomach. Only actual shape overlap triggers avoidance.
-            for (int step = 1; step <= 14; step++)
+            // An underside contact is a ceiling, not a tabletop. Searching upward
+            // there can choose an empty pose on the far side of a thin deck/roof.
+            for (int step = 1; step <= 14 && Vector3.Dot(initialCorrection.normalized, up) > -.1f; step++)
             {
                 Vector3 raised = position + up * (step * .04f);
                 if (!CarryPenetration(raised, rotation, out _))
@@ -330,6 +340,16 @@ namespace LongWayHome.Player
 
         public void Release()
         {
+            // Hand rendering may lead physics by one interpolation frame. Transfer
+            // only that small, collision-free difference before restoring the mesh.
+            if (held != null && !held.IsHandrail && held.Body != null && carriedVisual != null &&
+                Vector3.Distance(held.Body.position, carriedVisual.position) <= .15f &&
+                !CarryPenetration(carriedVisual.position, carriedVisual.rotation, out _))
+            {
+                held.Body.position = carriedVisual.position;
+                held.Body.rotation = carriedVisual.rotation;
+                held.transform.SetPositionAndRotation(carriedVisual.position, carriedVisual.rotation);
+            }
             ClearCarriedVisual();
             grabRequested = releaseRequested = false;
             if (joint != null)

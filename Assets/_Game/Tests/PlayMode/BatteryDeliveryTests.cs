@@ -70,6 +70,37 @@ namespace LongWayHome.Tests
         }
 
         [UnityTest]
+        public IEnumerator CockpitCeilingContactAndReleaseKeepTheVisibleBoxOnThisDeck()
+        {
+            Player.enabled = false;
+            var body = Player.GetComponent<Rigidbody>();
+            var view = Player.GetComponentInChildren<Camera>().transform;
+            var hand = Player.GetComponentsInChildren<HandInteractor>()[0];
+            body.position = new Vector3(-1, 13.85f, -2.4f);
+            yield return new WaitForFixedUpdate();
+            yield return null;
+            yield return GrabAt(view.position + Vector3.forward * .6f);
+            yield return new WaitForSeconds(.7f);
+            view.rotation = Quaternion.Euler(-80, 0, 0);
+            Player.GetComponent<PlayerMovement>().RequestPush();
+            for (int i = 0; i < 70; i++)
+            {
+                yield return new WaitForFixedUpdate();
+                yield return null;
+                var mesh = GameObject.Find("Workshop battery held presentation").transform;
+                Assert.That(mesh.position.y, Is.LessThan(15.9f), "A ceiling contact must not lift the visible box through the roof.");
+                Assert.That(Vector3.Distance(mesh.position, Socket.Battery.transform.position), Is.LessThan(.13f), "The visible box must remain near its physical body.");
+            }
+            view.rotation = Quaternion.identity;
+            yield return new WaitForSeconds(.5f);
+            Vector3 visible = GameObject.Find("Workshop battery held presentation").transform.position;
+            hand.Release();
+            Assert.That(Vector3.Distance(Socket.Battery.Body.position, visible), Is.LessThan(.15f), "Dropping must not reveal a box on a different deck.");
+            yield return new WaitForSeconds(1.5f);
+            Assert.That(Socket.Battery.Body.position.y, Is.GreaterThan(12.8f), "A drop over solid cockpit floor must stay on the cockpit deck.");
+        }
+
+        [UnityTest]
         public IEnumerator PickupReachesVisiblyAndWalkingKeepsGripStable()
         {
             Player.enabled = false;

@@ -58,3 +58,5 @@ Battery carry feedback: climbing works, but spring lag, visible jitter and rim s
 User rejected automatic climb tucking and reported persistent visible vibration. Remove that tuck and restore the normal forward hold. Render carried meshes in the same frame as the camera, with physics-based obstruction limits and restored original renderers on release. Add a LateUpdate camera-relative stability test; physics grip-error tests alone did not catch this presentation issue.
 
 Table approach feedback: replace the oversized chest-to-grip sphere retraction with actual collider overlap checks. Lift the pack over nearby table edges and slide along tall obstructions, preserving the forward hold and camera-relative rendering. Automatic climbing tuck remains removed.
+
+Cockpit carry/drop report: prevent tabletop assistance from lifting through ceiling undersides. Bound camera-relative presentation to the physical object and transfer only small collision-free offsets on release, avoiding a visible box that reveals a remote physics body when dropped. Add a cockpit ceiling-jump and same-deck drop regression.
