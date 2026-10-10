@@ -14,6 +14,8 @@ Scenes, input references, player prefab and URP settings are already generated a
 
 ## Five-deck gameplay playtest
 
+Latest drop-tunneling correction: all dynamic loose Grabbables use ContinuousDynamic collision detection, including the plain test box. Release preserves the exact physical pose and momentum; it no longer moves the collider to the rendered pose. **33/33 PlayMode tests passed** (`TestResults/ccd-playmode.xml`), including 24 drops at 40 m/s onto the cockpit deck and console, across the plain box and battery. Prior cockpit, table, jitter, climbing and socket regressions also passed. Human confirmation remains pending.
+
 Latest cockpit/drop correction: ceiling contacts cannot trigger an upward tabletop lift. Held presentation stays close to the physical body, and release reconciles only small collision-free visual offsets. **32/32 PlayMode tests passed** (`TestResults/drop-playmode.xml`), including a cockpit ceiling jump followed by a drop that stays on the cockpit floor, plus table clearance, walking stability, climbing and socket regressions. Human confirmation of the reported glitch remains pending.
 
 Latest table-approach refinement: actual held-collider overlap checks replace chest-directed sphere retraction. The pack lifts just enough to clear nearby tabletops, with surface-normal sliding for taller obstacles. Automatic climb tucking remains removed. **31/31 PlayMode tests passed** (`TestResults/surface-playmode.xml`), including forward/visible/nonpenetrating carry during table approach while looking ahead and down, plus the existing camera-relative jitter, climbing, pickup and socket regressions. Human feel review remains pending.
@@ -169,3 +171,5 @@ Next task: playtest the M3 layout before starting M4 navigation and scanning. Wa
 Table-approach Windows rebuild succeeded with Editor exit code 0 (`TestResults/surface-build.log`), replacing `Builds/WindowsSteady/TheLongWayHome.exe`.
 
 Cockpit/drop Windows rebuild succeeded with Editor exit code 0 (`TestResults/drop-build.log`) at `Builds/WindowsSteady/TheLongWayHome.exe`.
+
+Drop-tunneling Windows rebuild succeeded with Editor exit code 0 (`TestResults/ccd-build.log`) at `Builds/WindowsSteady/TheLongWayHome.exe`.

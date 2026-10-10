@@ -70,6 +70,50 @@ namespace LongWayHome.Tests
         }
 
         [UnityTest]
+        public IEnumerator ReleasedPropsCannotSkipThinDecksOrFurniture()
+        {
+            Player.enabled = false;
+            var view = Player.GetComponentInChildren<Camera>().transform;
+            var hand = Player.GetComponentsInChildren<HandInteractor>()[0];
+            var sample = GameObject.Find("Carry test sample").GetComponent<Grabbable>();
+            foreach (var prop in new[] { sample, Socket.Battery })
+            {
+                prop.Body.position = view.position + Vector3.forward * .65f;
+                prop.Body.linearVelocity = Vector3.zero;
+                UnityEngine.Physics.SyncTransforms();
+                yield return new WaitForFixedUpdate();
+                view.LookAt(prop.Body.position);
+                Assert.That(hand.TryGrab(), Is.True);
+                yield return new WaitForSeconds(.6f);
+                Vector3 position = prop.Body.position;
+                Quaternion rotation = prop.Body.rotation;
+                hand.Release();
+                Assert.That(prop.Body.position, Is.EqualTo(position), "Release must not teleport the collider to its rendered pose.");
+                Assert.That(prop.Body.rotation, Is.EqualTo(rotation));
+                yield return null;
+                // Deliberately fast drops at different timestep phases: a discrete
+                // small box can pass completely through the 18 cm deck in one step.
+                for (int drop = 0; drop < 12; drop++)
+                {
+                    bool furniture = drop >= 6;
+                    float top = furniture ? 13.8f : 12.8f;
+                    Vector3 start = new Vector3(furniture ? 0 : -1.4f, top + .36f + (drop % 6) * .055f, furniture ? 2.8f : -2.4f);
+                    prop.Body.position = start;
+                    prop.Body.rotation = Quaternion.Euler(0, drop * 17, 0);
+                    prop.transform.SetPositionAndRotation(start, prop.Body.rotation);
+                    prop.Body.angularVelocity = Vector3.zero;
+                    prop.Body.linearVelocity = Vector3.down * 40;
+                    UnityEngine.Physics.SyncTransforms();
+                    for (int step = 0; step < 12; step++)
+                    {
+                        yield return new WaitForFixedUpdate();
+                        Assert.That(prop.Body.position.y, Is.GreaterThan(top - .02f), prop.name + " must not tunnel through the drop surface.");
+                    }
+                }
+            }
+        }
+
+        [UnityTest]
         public IEnumerator CockpitCeilingContactAndReleaseKeepTheVisibleBoxOnThisDeck()
         {
             Player.enabled = false;

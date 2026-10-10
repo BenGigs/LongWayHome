@@ -60,3 +60,5 @@ User rejected automatic climb tucking and reported persistent visible vibration.
 Table approach feedback: replace the oversized chest-to-grip sphere retraction with actual collider overlap checks. Lift the pack over nearby table edges and slide along tall obstructions, preserving the forward hold and camera-relative rendering. Automatic climbing tuck remains removed.
 
 Cockpit carry/drop report: prevent tabletop assistance from lifting through ceiling undersides. Bound camera-relative presentation to the physical object and transfer only small collision-free offsets on release, avoiding a visible box that reveals a remote physics body when dropped. Add a cockpit ceiling-jump and same-deck drop regression.
+
+Intermittent drop tunneling: the small carry-test box still used discrete collision detection while the battery used ContinuousDynamic. Initialize all dynamic loose Grabbables with ContinuousDynamic and remove the release-time presentation-to-physics pose transfer. Add repeated fast drops of both props onto a thin deck and furniture, and assert release preserves the exact physical pose.

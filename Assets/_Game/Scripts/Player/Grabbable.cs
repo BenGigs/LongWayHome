@@ -9,6 +9,14 @@ namespace LongWayHome.Player
         public bool IsHandrail => handrail;
         public Rigidbody Body => GetComponent<Rigidbody>();
 
+        private void Awake()
+        {
+            // Small loose props can cross an entire thin deck between physics ticks.
+            // Apply this to every carryable, not only the battery fixture.
+            if (!handrail && Body != null && !Body.isKinematic)
+                Body.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
+        }
+
         public bool TryClaim(HandInteractor hand)
         {
             if (!isActiveAndEnabled) return false;

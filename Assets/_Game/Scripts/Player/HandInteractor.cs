@@ -340,16 +340,8 @@ namespace LongWayHome.Player
 
         public void Release()
         {
-            // Hand rendering may lead physics by one interpolation frame. Transfer
-            // only that small, collision-free difference before restoring the mesh.
-            if (held != null && !held.IsHandrail && held.Body != null && carriedVisual != null &&
-                Vector3.Distance(held.Body.position, carriedVisual.position) <= .15f &&
-                !CarryPenetration(carriedVisual.position, carriedVisual.rotation, out _))
-            {
-                held.Body.position = carriedVisual.position;
-                held.Body.rotation = carriedVisual.rotation;
-                held.transform.SetPositionAndRotation(carriedVisual.position, carriedVisual.rotation);
-            }
+            // Release at the physical pose. Moving to the presentation pose bypasses
+            // continuous collision detection and can cross a thin surface on release.
             ClearCarriedVisual();
             grabRequested = releaseRequested = false;
             if (joint != null)
