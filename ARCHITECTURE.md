@@ -1,5 +1,17 @@
 # Architecture
 
+## Five-deck gameplay test
+
+FiveDeckGameplay is a standalone movement test scene and the first Windows build scene. Bootstrap/ShipInterior remain available unchanged for the earlier regression suite. The Editor-generated test geometry uses an 8 m cylindrical room stack, 3.2 m deck spacing and a 2.1 m offset opening. Mesh decks and continuous orange rim colliders leave the shaft clear. The rims fill the 1.05–1.2 m radius strip with the same 18 cm thickness and top elevation as each deck. Matching 96-segment boundaries eliminate the recessed box-collider lip. The sealed bottom floor needs no rim collider. There are no poles, doors, stairs or guardrails. Room fixtures are deliberately simple placeholders; no Blender mesh import is required to test the mechanics.
+
+Each ring has a LedgeRing defining the deck plane and radial hang/landing targets. HandInteractor retains raycast occlusion and reach limits. Holding a grab button retries acquisition so a jump can bring a ring into reach; upper ledges cannot be caught while grounded. LedgeClimber, when present, is ticked by PlayerMovement: it uses bounded velocity corrections and gravity compensation through a held ring to hang, rise inside the shaft, then cross onto the floor while W is held. The Rigidbody remains dynamic and collidable throughout. Releasing W stops pull-up motion; releasing all ledge grips or switching to coasting cancels the assist. The grip remains held on landing. Existing non-ledge rails use the original locomotion path.
+
+GameplayReset reloads only the active test scene on R while unpaused. There is no fall damage in this playtest. Scientific resource/navigation systems and polished art remain outside this test.
+
+Ring aiming first uses the exact ray; if no grabbable is hit, a reusable sphere-cast buffer searches within 28 cm of that ray. Only LedgeRing colliders qualify, ranked by angular aiming error, within the original reach. A separate ray to the contact point must hit that same collider first. Acquisition still requires grab input; loose tools and ordinary rails retain precise targeting. Active pull velocity follows an exponential 0.16 s response to soften starts and changes of direction. Hanging/fall arrest and releasing W retain prompt braking; no free-flight forces are added.
+
+Powered ledge movement also accepts A/D as a view-yaw-relative body offset capped at 0.35 m, without moving hand anchors. S reverses a partial mantle into the shaft before lowering toward a point 0.4 m below the normal hang. Releasing movement pauses the partial move, and W resumes ascent. All targets continue to use dynamic collision and the existing contact-force bounds.
+
 ## Foundation
 
 `Bootstrap` stays loaded and owns `SceneBootstrap`, which validates build scene availability, loads `ShipInterior` and `SpaceExterior` additively, then makes the interior active. No global singleton or DontDestroyOnLoad manager is needed. Start a normal session through Bootstrap. ShipInterior also works alone for quick movement inspection.
@@ -8,7 +20,7 @@ ShipInterior contains a 10 × 14 × 4 metre single-deck graybox. Habitat/greenho
 
 The accepted M2 room is preserved in GravityPrototype.unity, outside the build scene list, for direct Editor comparison. SpaceExterior is deliberately empty until M4. No launch sequence, functional consoles, robot behavior, gardening or animated doors are implemented here. Door panels are represented in their retracted/open positions.
 
-`FoundationPlayer` retains its original asset identity but now owns only the private ShipControls clone, input dispatch, camera pitch, pause and prototype HUD. `PlayerMovement` owns FixedUpdate locomotion, yaw/gravity alignment, grounding and push-off. Capsule is 2 m tall, radius 0.35 m, mass 80 kg with continuous collision detection, interpolation and frozen physical rotation. Layer 2 excludes it from its ground/grab queries. Camera is a child at eye level. The IMGUI HUD is temporary.
+`FoundationPlayer` retains its original asset identity but now owns only the private ShipControls clone, input dispatch, camera pitch and pause. `PlayerMovement` owns FixedUpdate locomotion, yaw/gravity alignment, grounding and push-off. Capsule is 2 m tall, radius 0.35 m, mass 80 kg with continuous collision detection, interpolation and frozen physical rotation. Layer 2 excludes it from its ground/grab queries. Camera is a child at eye level. The prototype IMGUI HUD and crosshair have been removed.
 
 `ShipGravityController` exposes a finite local acceleration vector and transforms its negative into world-space effective gravity. `ShipGravityBody` disables built-in gravity and applies acceleration in FixedUpdate, independent of mass. Each body has an explicit serialized source; no global discovery/singleton. The reusable player prefab receives its source through scene overrides. Coasting has zero linear/angular damping on loose tools. Disabling/missing the source yields zero acceleration; missing references are reported at startup.
 

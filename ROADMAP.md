@@ -42,3 +42,11 @@ M3 Blender review model: ArtSource/Ship/LongWayHome_Expedition_v03.blend contain
 Current M3 design supersedes the three-deck stair model: v04 has five cylindrical stacked rooms, no doors/stairs/guardrails, open aligned hatches, floor-level grab rings and a side-mounted climbing pole. Navigation includes an open sleeping nook. Blender review first; powered pole climbing and the new layout's Unity integration remain pending.
 
 M3 v05 supersedes the pole: remove it entirely and preserve floor-edge grab rings. Planned powered traversal is jump, catch the next deck and pull up. The shaft stays clear for falling/coasting. Unity ledge catching and pull-ups remain pending; the existing rail motor does not implement them.
+
+Gameplay testing now takes priority over art: feat/ledge-traversal adds FiveDeckGameplay, catches/hanging/pull-ups, free drops, coasting and reset. Preserve earlier scenes for regression tests. This is still the M3 movement/layout playtest, not M4 navigation implementation.
+
+Human feedback approved the initial traversal. Current M3 tuning eases active pull-ups and adds input-gated, occlusion-checked ring aim tolerance to help select a deck during descent. Review the new feel before adding further braking or movement mechanics.
+
+User accepted the smoother climbing and catch tolerance. Follow-up adds A/D body shifts and S lowering while gripping, and removes the on-screen HUD/instructions/crosshair. This remains M3 traversal tuning.
+
+Traversal follow-up replaces the recessed segmented ring with a continuous flush rim. Ring and deck share their top plane, thickness and boundary so the player can cross the orange edge without encountering a step. The original opening diameter and grab behavior are retained.

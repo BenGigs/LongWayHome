@@ -6,6 +6,9 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
+    path: Assets/_Game/Scenes/FiveDeckGameplay.unity
+    guid: 540a351dce191b346ba4104fbc491231
+  - enabled: 1
     path: Assets/_Game/Scenes/Bootstrap.unity
     guid: 3c85e29116a24df4bbe7653ce0ca3ddb
   - enabled: 1

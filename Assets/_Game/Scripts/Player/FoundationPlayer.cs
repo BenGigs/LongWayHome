@@ -4,7 +4,7 @@ using LongWayHome.ShipPhysics;
 
 namespace LongWayHome.Player
 {
-    /// <summary>Input, view, pause and prototype HUD; locomotion and grabbing have separate components.</summary>
+    /// <summary>Input, view and pause; locomotion and grabbing have separate components.</summary>
     [RequireComponent(typeof(Rigidbody), typeof(CapsuleCollider))]
     public sealed class FoundationPlayer : MonoBehaviour
     {
@@ -63,9 +63,9 @@ namespace LongWayHome.Player
 
             if (toggleGravity.WasPressedThisFrame())
                 gravitySource.AccelerationLocal = gravitySource.AccelerationLocal.sqrMagnitude > 0.01f ? Vector3.zero : Vector3.up * 9.81f;
-            if (leftGrab.WasPressedThisFrame()) leftHand.RequestGrab();
+            if (leftGrab.IsPressed() && !leftHand.IsHolding) leftHand.RequestGrab();
             if (!leftGrab.IsPressed()) leftHand.RequestRelease();
-            if (rightGrab.WasPressedThisFrame()) rightHand.RequestGrab();
+            if (rightGrab.IsPressed() && !rightHand.IsHolding) rightHand.RequestGrab();
             if (!rightGrab.IsPressed()) rightHand.RequestRelease();
             if (jumpPush.WasPressedThisFrame()) motor.RequestPush();
 
@@ -105,17 +105,5 @@ namespace LongWayHome.Player
             if (runtimeActions != null) Destroy(runtimeActions);
         }
 
-        private void OnGUI()
-        {
-            GUI.Box(new Rect(16, 16, 560, paused ? 160 : 140),
-                "THE LONG WAY HOME — GRAVITY PROTOTYPE\n" +
-                "WASD: walk / pull while holding rail   |   Mouse: look\n" +
-                "Hold LMB / RMB: grab with left / right hand   |   Release: let go\n" +
-                "Space: jump / push from contact   |   G: 1g / coast   |   Esc: pause\n" +
-                $"Gravity: {gravitySource.EffectiveGravity.magnitude:F2} m/s²   |   No contact = no WASD thrust\n" +
-                $"Left: {leftHand.HeldName}   |   Right: {rightHand.HeldName}" +
-                (paused ? "\nPAUSED — press Escape to resume" : ""));
-            GUI.Label(new Rect(Screen.width / 2f - 5, Screen.height / 2f - 10, 20, 20), "+");
-        }
     }
 }
