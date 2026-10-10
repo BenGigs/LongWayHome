@@ -1,0 +1,6 @@
+{
+  "name": "LongWayHome.Editor",
+  "rootNamespace": "LongWayHome.Editor",
+  "references": ["LongWayHome.Runtime", "Unity.InputSystem"],
+  "includePlatforms": ["Editor"]
+}

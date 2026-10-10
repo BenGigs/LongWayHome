@@ -1,0 +1,5 @@
+{
+  "name": "LongWayHome.PlayModeTests",
+  "references": ["LongWayHome.Runtime", "Unity.InputSystem"],
+  "optionalUnityReferences": ["TestAssemblies"]
+}

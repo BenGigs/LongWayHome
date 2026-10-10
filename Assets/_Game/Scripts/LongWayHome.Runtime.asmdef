@@ -1,0 +1,5 @@
+{
+  "name": "LongWayHome.Runtime",
+  "rootNamespace": "LongWayHome",
+  "references": ["Unity.InputSystem"]
+}
