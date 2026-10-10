@@ -21,13 +21,29 @@ namespace LongWayHome.Player
         private Collider[] playerColliders;
         private bool grabRequested;
         private bool releaseRequested;
+        private Transform handVisual;
+        private Renderer originalHandRenderer;
+        private Vector3 reachStartLocal;
+        private Vector3 pickupLocal;
+        private float pickupTime;
+        private Transform carriedVisual;
+        private Renderer[] carriedRenderers;
+        private bool[] rendererStates;
+        private Quaternion pickupRotation;
+        private int originalSolverIterations;
+        private int originalVelocityIterations;
+        private float carryRadius;
+        private const float ReachDuration = .18f;
+        private const float RetrieveDuration = .28f;
 
         public bool IsHolding => held != null;
+        public Grabbable HeldObject => held;
         public bool IsAnchored => held != null && held.IsHandrail;
         public Vector3 PushNormal => railNormal;
         public string HeldName => held == null ? "empty" : held.name;
         public LedgeRing HeldLedge => IsAnchored ? held.GetComponentInParent<LedgeRing>() : null;
         public Vector3 GripPoint => held == null ? Vector3.zero : HeldPhysicsMatrix().MultiplyPoint3x4(localAnchor);
+        public Vector3 VisibleGripPoint => carriedVisual != null ? carriedVisual.TransformPoint(localAnchor) : GripPoint;
 
         public void RequestGrab()
         {
@@ -50,6 +66,20 @@ namespace LongWayHome.Player
                 return;
             }
             playerColliders = playerBody.GetComponentsInChildren<Collider>();
+            // Keep the visible hand separate from its physics target, so reaching can
+            // be animated without snapping the hand renderer to the pickup point.
+            originalHandRenderer = handTarget.GetComponent<Renderer>();
+            var mesh = handTarget.GetComponent<MeshFilter>();
+            if (originalHandRenderer != null && mesh != null)
+            {
+                var visual = new GameObject(name + " visible grip", typeof(MeshFilter), typeof(MeshRenderer));
+                visual.GetComponent<MeshFilter>().sharedMesh = mesh.sharedMesh;
+                visual.GetComponent<MeshRenderer>().sharedMaterials = originalHandRenderer.sharedMaterials;
+                handVisual = visual.transform;
+                handVisual.localScale = handTarget.transform.lossyScale;
+                handVisual.position = handTarget.position;
+                originalHandRenderer.enabled = false;
+            }
         }
 
         public bool TryGrab()
@@ -65,6 +95,9 @@ namespace LongWayHome.Player
             if (candidate == null || !candidate.TryClaim(this)) return false;
 
             held = candidate;
+            pickupTime = Time.time;
+            reachStartLocal = playerBody.transform.InverseTransformPoint(handVisual != null ? handVisual.position : handTarget.position);
+            pickupLocal = Quaternion.Inverse(playerBody.rotation) * (hit.point - playerBody.position);
             // Raycasts use the physics pose. An interpolated Transform can lag behind
             // it, producing the wrong grip point on a moving (or repositioned) tool.
             localAnchor = HeldPhysicsMatrix().inverse.MultiplyPoint3x4(hit.point);
@@ -92,14 +125,22 @@ namespace LongWayHome.Player
                 joint.autoConfigureConnectedAnchor = false;
                 joint.anchor = localAnchor;
                 joint.connectedAnchor = Vector3.zero;
-                joint.xMotion = joint.yMotion = joint.zMotion = ConfigurableJointMotion.Free;
-                var drive = new JointDrive { positionSpring = 1200f, positionDamper = 80f, maximumForce = 350f };
-                joint.xDrive = joint.yDrive = joint.zDrive = drive;
+                // A carried object has a firm grip, not a spring that oscillates and
+                // stretches when the player accelerates. World collisions remain active.
+                joint.xMotion = joint.yMotion = joint.zMotion = ConfigurableJointMotion.Locked;
+                originalSolverIterations = held.Body.solverIterations;
+                originalVelocityIterations = held.Body.solverVelocityIterations;
+                held.Body.solverIterations = 16;
+                held.Body.solverVelocityIterations = 8;
                 // A grip holds orientation relative to the hand, rather than behaving
                 // like a ball-and-socket. Capture the pickup pose, then turn with the hand.
                 joint.angularXMotion = joint.angularYMotion = joint.angularZMotion = ConfigurableJointMotion.Locked;
                 heldColliders = held.GetComponentsInChildren<Collider>();
+                carryRadius = .1f;
+                foreach (var item in heldColliders)
+                    carryRadius = Mathf.Max(carryRadius, item.bounds.extents.magnitude + Vector3.Distance(item.bounds.center, held.Body.position));
                 SetPlayerCollisionIgnored(true);
+                CreateCarriedVisual();
             }
             joint.enableCollision = false;
             return true;
@@ -142,16 +183,166 @@ namespace LongWayHome.Player
             else if (grabRequested) TryGrab();
             grabRequested = releaseRequested = false;
             if (held != null && (!held.isActiveAndEnabled || joint == null ||
-                Vector3.Distance(playerBody.position, HeldPhysicsMatrix().MultiplyPoint3x4(localAnchor)) > reach + 0.8f))
+                (IsAnchored && Vector3.Distance(playerBody.position, GripPoint) > reach + 0.8f)))
                 Release();
             if (held == null && joint != null) Release();
-            Vector3 target = IsAnchored ? held.transform.TransformPoint(localAnchor) : view.TransformPoint(restOffset);
+            // Interpolated camera transforms describe the previous rendered pose.
+            // Convert them back to the current Rigidbody pose before driving physics.
+            Quaternion rotation = playerBody.rotation * Quaternion.Inverse(playerBody.transform.rotation) * view.rotation;
+            Vector3 eye = playerBody.position + playerBody.rotation * playerBody.transform.InverseTransformPoint(view.position);
+            Vector3 target = IsAnchored ? GripPoint : eye + rotation * restOffset;
+            if (held != null && !IsAnchored)
+            {
+                float t = Mathf.SmoothStep(0, 1, (Time.time - pickupTime - ReachDuration) / RetrieveDuration);
+                target = Vector3.Lerp(playerBody.position + playerBody.rotation * pickupLocal, target, t);
+                target = ResolveCarryAnchor(target, rotation * pickupRotation, playerBody.rotation * Vector3.up);
+            }
             handTarget.MovePosition(target);
-            handTarget.MoveRotation(view.rotation);
+            handTarget.MoveRotation(rotation);
+        }
+
+        private void LateUpdate()
+        {
+            if (handVisual == null) return;
+            // Render the held meshes in the same frame as the camera. Independently
+            // interpolated player, target and dynamic object poses can visibly beat
+            // against one another even when their FixedUpdate grip error is small.
+            if (carriedVisual != null && held != null)
+            {
+                float retrieve = Mathf.SmoothStep(0, 1, (Time.time - pickupTime - ReachDuration) / RetrieveDuration);
+                Vector3 anchor = Vector3.Lerp(playerBody.transform.TransformPoint(pickupLocal), view.TransformPoint(restOffset), retrieve);
+                Quaternion rotation = view.rotation * pickupRotation;
+                anchor = ResolveCarryAnchor(anchor, rotation, playerBody.transform.up);
+                Vector3 position = anchor - rotation * Vector3.Scale(localAnchor, carriedVisual.localScale);
+                // Camera-relative rendering only hides small interpolation errors.
+                // Never show a fictional grip on the other side of a blocked deck.
+                if (Vector3.Distance(position, held.transform.position) > .12f)
+                {
+                    position = held.transform.position;
+                    rotation = held.transform.rotation;
+                }
+                carriedVisual.SetPositionAndRotation(position, rotation);
+            }
+            Vector3 target = carriedVisual != null ? VisibleGripPoint : held != null ? held.transform.TransformPoint(localAnchor) : view.TransformPoint(restOffset);
+            if (held != null)
+            {
+                float t = Mathf.SmoothStep(0, 1, (Time.time - pickupTime) / ReachDuration);
+                target = Vector3.Lerp(playerBody.transform.TransformPoint(reachStartLocal), target, t);
+            }
+            handVisual.position = target;
+            handVisual.rotation = view.rotation;
+        }
+
+        private Vector3 ResolveCarryAnchor(Vector3 anchor, Quaternion rotation, Vector3 up)
+        {
+            Vector3 offset = rotation * Vector3.Scale(localAnchor, held.transform.lossyScale);
+            Vector3 position = anchor - offset;
+            if (!CarryPenetration(position, rotation, out Vector3 initialCorrection)) return anchor;
+
+            // A nearby tabletop should lift the pack over its edge, not shorten the
+            // arm toward the stomach. Only actual shape overlap triggers avoidance.
+            // An underside contact is a ceiling, not a tabletop. Searching upward
+            // there can choose an empty pose on the far side of a thin deck/roof.
+            for (int step = 1; step <= 14 && Vector3.Dot(initialCorrection.normalized, up) > -.1f; step++)
+            {
+                Vector3 raised = position + up * (step * .04f);
+                if (!CarryPenetration(raised, rotation, out _))
+                {
+                    float low = (step - 1) * .04f;
+                    float high = step * .04f;
+                    for (int refine = 0; refine < 6; refine++)
+                    {
+                        float middle = (low + high) * .5f;
+                        if (CarryPenetration(position + up * middle, rotation, out _)) low = middle;
+                        else high = middle;
+                    }
+                    return position + up * (high + .008f) + offset;
+                }
+            }
+            // Tall walls/ceilings cannot be cleared by lifting. Slide out along their
+            // surface normal, preserving height at a wall instead of diving inward.
+            for (int step = 0; step < 8; step++)
+            {
+                if (!CarryPenetration(position, rotation, out Vector3 correction)) break;
+                position += correction;
+            }
+            return position + offset;
+        }
+
+        private bool CarryPenetration(Vector3 position, Quaternion rotation, out Vector3 correction)
+        {
+            correction = Vector3.zero;
+            // The sphere is broad phase only: it never determines the carry pose.
+            var nearby = UnityEngine.Physics.OverlapSphere(position, carryRadius, grabLayers, QueryTriggerInteraction.Ignore);
+            float deepest = 0;
+            foreach (var item in heldColliders)
+            {
+                if (item == null || !item.enabled || item.isTrigger) continue;
+                Vector3 partOffset = Quaternion.Inverse(held.transform.rotation) * (item.transform.position - held.transform.position);
+                Quaternion partRotation = Quaternion.Inverse(held.transform.rotation) * item.transform.rotation;
+                foreach (var obstacle in nearby)
+                {
+                    if (obstacle.attachedRigidbody == held.Body || obstacle.attachedRigidbody == playerBody) continue;
+                    if (UnityEngine.Physics.ComputePenetration(item, position + rotation * partOffset, rotation * partRotation,
+                        obstacle, obstacle.transform.position, obstacle.transform.rotation, out Vector3 direction, out float depth) && depth > deepest)
+                    {
+                        deepest = depth;
+                        correction = direction * (depth + .008f);
+                    }
+                }
+            }
+            return deepest > 0;
+        }
+
+        private void CreateCarriedVisual()
+        {
+            pickupRotation = Quaternion.Inverse(view.rotation) * held.Body.rotation;
+            carriedVisual = new GameObject(held.name + " held presentation").transform;
+            carriedVisual.SetPositionAndRotation(held.Body.position, held.Body.rotation);
+            carriedVisual.localScale = held.transform.lossyScale;
+            carriedRenderers = held.GetComponentsInChildren<MeshRenderer>();
+            rendererStates = new bool[carriedRenderers.Length];
+            for (int i = 0; i < carriedRenderers.Length; i++)
+            {
+                var source = carriedRenderers[i];
+                rendererStates[i] = source.enabled;
+                var filter = source.GetComponent<MeshFilter>();
+                if (filter == null) continue;
+                var part = new GameObject(source.name, typeof(MeshFilter), typeof(MeshRenderer));
+                part.transform.SetParent(carriedVisual, false);
+                part.transform.localPosition = held.transform.InverseTransformPoint(source.transform.position);
+                part.transform.localRotation = Quaternion.Inverse(held.transform.rotation) * source.transform.rotation;
+                Vector3 scale = source.transform.lossyScale;
+                Vector3 rootScale = held.transform.lossyScale;
+                part.transform.localScale = new Vector3(scale.x / rootScale.x, scale.y / rootScale.y, scale.z / rootScale.z);
+                part.GetComponent<MeshFilter>().sharedMesh = filter.sharedMesh;
+                var renderer = part.GetComponent<MeshRenderer>();
+                renderer.sharedMaterials = source.sharedMaterials;
+                renderer.enabled = source.enabled;
+                source.enabled = false;
+            }
+        }
+
+        private void ClearCarriedVisual()
+        {
+            if (carriedRenderers != null)
+                for (int i = 0; i < carriedRenderers.Length; i++)
+                    if (carriedRenderers[i] != null) carriedRenderers[i].enabled = rendererStates[i];
+            if (carriedVisual != null)
+            {
+                carriedVisual.gameObject.SetActive(false);
+                Destroy(carriedVisual.gameObject);
+            }
+            carriedVisual = null;
+            carriedRenderers = null;
+            rendererStates = null;
         }
 
         public void Release()
         {
+            // Release at the physical pose. Moving to the presentation pose bypasses
+            // continuous collision detection and can cross a thin surface on release.
+            ClearCarriedVisual();
             grabRequested = releaseRequested = false;
             if (joint != null)
             {
@@ -162,6 +353,11 @@ namespace LongWayHome.Player
                 Destroy(joint);
             }
             SetPlayerCollisionIgnored(false);
+            if (held != null && !held.IsHandrail && held.Body != null)
+            {
+                held.Body.solverIterations = originalSolverIterations;
+                held.Body.solverVelocityIterations = originalVelocityIterations;
+            }
             if (held != null) held.Release(this);
             held = null;
             joint = null;
@@ -183,6 +379,16 @@ namespace LongWayHome.Player
                     if (item != null && player != null) UnityEngine.Physics.IgnoreCollision(item, player, ignored);
         }
 
-        private void OnDisable() => Release();
+        private void OnEnable() { if (handVisual != null) handVisual.gameObject.SetActive(true); }
+        private void OnDisable()
+        {
+            Release();
+            if (handVisual != null) handVisual.gameObject.SetActive(false);
+        }
+        private void OnDestroy()
+        {
+            if (handVisual != null) Destroy(handVisual.gameObject);
+            if (originalHandRenderer != null) originalHandRenderer.enabled = true;
+        }
     }
 }

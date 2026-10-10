@@ -50,3 +50,15 @@ Human feedback approved the initial traversal. Current M3 tuning eases active pu
 User accepted the smoother climbing and catch tolerance. Follow-up adds A/D body shifts and S lowering while gripping, and removes the on-screen HUD/instructions/crosshair. This remains M3 traversal tuning.
 
 Traversal follow-up replaces the recessed segmented ring with a continuous flush rim. Ring and deck share their top plane, thickness and boundary so the player can cross the orange edge without encountering a step. The original opening diameter and grab behavior are retained.
+
+User accepted traversal and the flush rims. The next approved M3 interaction test is battery delivery: carry a pack from fuel/storage through two hatches with one free hand, latch it into the workshop to power a lamp/fan, remove it, and repeat while coasting. No navigation, robot deployment or resource simulation is included. Work is on feat/battery-delivery, stacked on feat/ledge-traversal.
+
+Battery carry feedback: climbing works, but spring lag, visible jitter and rim snags caused unwanted drops. The follow-up replaces the loose spring grip with a firm joint, drives it from physics-space poses, tucks the pack during climbs, retracts near obstacles, and animates visible reaching/retrieval. Intentional release remains immediate; no HUD is added.
+
+User rejected automatic climb tucking and reported persistent visible vibration. Remove that tuck and restore the normal forward hold. Render carried meshes in the same frame as the camera, with physics-based obstruction limits and restored original renderers on release. Add a LateUpdate camera-relative stability test; physics grip-error tests alone did not catch this presentation issue.
+
+Table approach feedback: replace the oversized chest-to-grip sphere retraction with actual collider overlap checks. Lift the pack over nearby table edges and slide along tall obstructions, preserving the forward hold and camera-relative rendering. Automatic climbing tuck remains removed.
+
+Cockpit carry/drop report: prevent tabletop assistance from lifting through ceiling undersides. Bound camera-relative presentation to the physical object and transfer only small collision-free offsets on release, avoiding a visible box that reveals a remote physics body when dropped. Add a cockpit ceiling-jump and same-deck drop regression.
+
+Intermittent drop tunneling: the small carry-test box still used discrete collision detection while the battery used ContinuousDynamic. Initialize all dynamic loose Grabbables with ContinuousDynamic and remove the release-time presentation-to-physics pose transfer. Add repeated fast drops of both props onto a thin deck and furniture, and assert release preserves the exact physical pose.

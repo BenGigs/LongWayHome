@@ -173,6 +173,21 @@ namespace LongWayHome.Editor
             BuildWindowsTo("Builds/WindowsFlush/TheLongWayHome.exe");
         }
 
+        public static void BuildBatteryPlaytest()
+        {
+            BuildWindowsTo("Builds/WindowsBattery/TheLongWayHome.exe");
+        }
+
+        public static void BuildGripPlaytest()
+        {
+            BuildWindowsTo("Builds/WindowsGrip/TheLongWayHome.exe");
+        }
+
+        public static void BuildSteadyPlaytest()
+        {
+            BuildWindowsTo("Builds/WindowsSteady/TheLongWayHome.exe");
+        }
+
         private static void BuildWindowsTo(string path)
         {
             BuildReport report = BuildPipeline.BuildPlayer(EditorBuildSettings.scenes,

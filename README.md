@@ -14,7 +14,27 @@ Scenes, input references, player prefab and URP settings are already generated a
 
 ## Five-deck gameplay playtest
 
-Latest tuning build: `Builds/WindowsFlush/TheLongWayHome.exe` (separate from the prior playtest). Rebuild with the batch Editor entry point `LongWayHome.Editor.FoundationSetup.BuildFlushPlaytest`.
+Latest drop-tunneling correction: all dynamic loose Grabbables use ContinuousDynamic collision detection, including the plain test box. Release preserves the exact physical pose and momentum; it no longer moves the collider to the rendered pose. **33/33 PlayMode tests passed** (`TestResults/ccd-playmode.xml`), including 24 drops at 40 m/s onto the cockpit deck and console, across the plain box and battery. Prior cockpit, table, jitter, climbing and socket regressions also passed. Human confirmation remains pending.
+
+Latest cockpit/drop correction: ceiling contacts cannot trigger an upward tabletop lift. Held presentation stays close to the physical body, and release reconciles only small collision-free visual offsets. **32/32 PlayMode tests passed** (`TestResults/drop-playmode.xml`), including a cockpit ceiling jump followed by a drop that stays on the cockpit floor, plus table clearance, walking stability, climbing and socket regressions. Human confirmation of the reported glitch remains pending.
+
+Latest table-approach refinement: actual held-collider overlap checks replace chest-directed sphere retraction. The pack lifts just enough to clear nearby tabletops, with surface-normal sliding for taller obstacles. Automatic climb tucking remains removed. **31/31 PlayMode tests passed** (`TestResults/surface-playmode.xml`), including forward/visible/nonpenetrating carry during table approach while looking ahead and down, plus the existing camera-relative jitter, climbing, pickup and socket regressions. Human feel review remains pending.
+
+Latest carry presentation: automatic climb tucking is removed; the object stays in the normal forward hold, with retraction only for obstructions. Held mesh rendering now follows the camera frame instead of independently interpolated physics bodies. **30/30 PlayMode tests passed** (`TestResults/steady-playmode.xml`), including a LateUpdate check requiring under 2 mm camera-relative visible grip error during walking, original-renderer restoration after release, and the previous movement/carry/socket tests. This supersedes the tucking behavior described in the earlier verification record below. Human feel review remains pending.
+
+The steady-carry Windows build succeeded with Editor exit code 0 (`TestResults/steady-build.log`) and was launched from `Builds/WindowsSteady/TheLongWayHome.exe`.
+
+Carry refinement: tools use a firm grip with a visible 0.18 s reach and 0.28 s retrieval. They tuck closer during climbs and retract near obstructions, retaining world collision. Carried objects no longer detach from the rail distance rule. **29/29 PlayMode tests passed** (`TestResults/carry-final.xml`), including grip-error bounds while walking and looking around during two one-handed climbs, visible reach timing, release/inertia, and battery installation/removal. Human review of pickup and carrying feel remains pending.
+
+The grip-refinement Windows build succeeded with Editor exit code 0 (`TestResults/carry-build.log`) and was launched from `Builds/WindowsGrip/TheLongWayHome.exe`.
+
+Battery delivery playtest: pick up the orange pack with a blue stripe from its pedestal in fuel/storage. Carry it up two decks to the workshop using your free hand on the rings. Bring it close to the blue socket between orange guides on the workbench, aim at the socket, and press **E** to latch it. The green lamp and spinning fan indicate power. Aim at the installed battery and press E again to release it; catch it with a mouse button. G lets you repeat in coasting, and R restores the initial battery position. No HUD prompts are shown. This is a reusable interaction test, not a battery-charge or ship-power simulation.
+
+Battery verification: **28/28 PlayMode tests passed** (`TestResults/battery-playmode.xml`), including two actual one-handed ascents while retaining the pack, E installation/removal, lamp/fan feedback, latch stability across gravity changes, ejection/drift, reset, distance/obstruction rejection, and the prior movement regressions. Supply and workshop renders were inspected. Human review of the delivery loop remains pending.
+
+The battery Windows development build succeeded with Editor exit code 0 (`TestResults/battery-build.log`) and was launched from `Builds/WindowsBattery/TheLongWayHome.exe`. Do not rerun `BatteryDeliverySetup.Create`; the fixtures and references are committed in FiveDeckGameplay.
+
+Latest tuning build: `Builds/WindowsSteady/TheLongWayHome.exe` (separate from the prior playtest). Rebuild with the batch Editor entry point `LongWayHome.Editor.FoundationSetup.BuildSteadyPlaytest`.
 
 Flush-rim verification: the full run passed the previous 24 tests; the new crossing check needed a longer traversal interval (`TestResults/flush-playmode.xml`). With the corrected interval and final mesh shading, all 10 ledge tests passed (`TestResults/flush-final.xml`), including same-height ring/deck ray checks and a capsule crossing the rim into a fall. The rendered seam was inspected. Unity generated the replacement continuous rim meshes and scene changes, preserving the deck GUID; metadata/whitespace audits passed.
 
@@ -43,11 +63,11 @@ Pull-ups keep the Rigidbody dynamic and collidable. The orange rims share the fl
 - **WASD**: walk while grounded. While holding a rail, pull in the camera's forward/right directions, including vertically when looking up/down. In free float, WASD adds no thrust.
 - **Space**: jump from the floor, or push away from a contacted static surface / held rail in zero-g. Jumping and pushing keep both grips; release each mouse button to let go. Floor jumps use a separate 4 m/s impulse (about 0.8 m rise at 1g when unobstructed). Space in open space does nothing.
 - The rail is to the left of the starting position. The wrench and sample canister sit on the right-hand shelf in the workshop, through the first hatch. Aim at each in turn to hold two different objects.
-- **Escape** pauses physics and releases the cursor. Resuming reconciles any grab buttons released while paused. **E** remains reserved for future consoles.
+- **Escape** pauses physics and releases the cursor. Resuming reconciles any grab buttons released while paused. **E** operates the workshop battery latch in FiveDeckGameplay.
 
 Manual acceptance loop: walk and grab the rail; press G; look slightly up and hold W to pull; press Space to push while keeping your grip; release the mouse buttons to let go and observe drift without input thrust. Return to 1g, pick up the wrench and canister, coast, release a moving tool and observe inertia, then restore 1g and check that the objects settle. Repeat near walls and while holding both hands. Record jitter, clipping, excessive reach or uncomfortable camera motion during the layout playtest.
 
-The prototype uses simple hand markers, rail reach constraints and spring-driven tool grabs. Tools preserve their pickup orientation relative to the hand, follow camera turns, and regain free rotation on release. No full-body IK, production repair interaction, robot, navigation, survival or science clocks yet.
+The prototype uses simple hand markers, rail reach constraints and firm tool grips with a visible reach/retrieve motion. Tools preserve their pickup orientation relative to the hand, follow camera turns, and regain free rotation on release. No full-body IK, production repair interaction, robot, navigation, survival or science clocks yet.
 
 ## Dependencies and project organization
 
@@ -147,3 +167,9 @@ Remote: [BenGigs/LongWayHome](https://github.com/BenGigs/LongWayHome). The found
 Foundation acceptance: [issue #1](https://github.com/BenGigs/LongWayHome/issues/1). Gravity prototype: [issue #2](https://github.com/BenGigs/LongWayHome/issues/2). Ship blockout: [issue #4](https://github.com/BenGigs/LongWayHome/issues/4).
 
 Next task: playtest the M3 layout before starting M4 navigation and scanning. Walk from the habitat through the workshop to the cockpit, then press G and use the passage rails to travel both ways. Check hatch clearance, tool access and the single pilot seat/berth arrangement. Consoles, crops and the robot bay are space reservations only. See ROADMAP.md.
+
+Table-approach Windows rebuild succeeded with Editor exit code 0 (`TestResults/surface-build.log`), replacing `Builds/WindowsSteady/TheLongWayHome.exe`.
+
+Cockpit/drop Windows rebuild succeeded with Editor exit code 0 (`TestResults/drop-build.log`) at `Builds/WindowsSteady/TheLongWayHome.exe`.
+
+Drop-tunneling Windows rebuild succeeded with Editor exit code 0 (`TestResults/ccd-build.log`) at `Builds/WindowsSteady/TheLongWayHome.exe`.
