@@ -11,6 +11,7 @@ namespace LongWayHome.Tests
 {
     public abstract class PrototypeTestContext
     {
+        protected virtual string StartupScene => "Bootstrap";
         protected Keyboard keyboard;
         protected Mouse mouse;
         private InputSettings.BackgroundBehavior previousBackgroundBehavior;
@@ -31,11 +32,11 @@ namespace LongWayHome.Tests
 #endif
             keyboard = InputSystem.AddDevice<Keyboard>();
             mouse = InputSystem.AddDevice<Mouse>();
-            yield return SceneManager.LoadSceneAsync("Bootstrap", LoadSceneMode.Single);
+            yield return SceneManager.LoadSceneAsync(StartupScene, LoadSceneMode.Single);
             float timeout = Time.realtimeSinceStartup + 20;
-            while (!SceneManager.GetSceneByName("SpaceExterior").isLoaded && Time.realtimeSinceStartup < timeout)
+            while (StartupScene == "Bootstrap" && !SceneManager.GetSceneByName("SpaceExterior").isLoaded && Time.realtimeSinceStartup < timeout)
                 yield return null;
-            Assert.That(SceneManager.GetSceneByName("SpaceExterior").isLoaded, Is.True);
+            if (StartupScene == "Bootstrap") Assert.That(SceneManager.GetSceneByName("SpaceExterior").isLoaded, Is.True);
             yield return new WaitForSecondsRealtime(0.3f);
         }
 

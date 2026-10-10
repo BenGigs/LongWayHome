@@ -24,7 +24,7 @@ namespace LongWayHome.Editor
             Debug.Log("SHIP_BLOCKOUT_PREVIEW_OK");
         }
 
-        private static void Save(Camera camera, string name, Vector3 position, Vector3 target)
+        internal static void Save(Camera camera, string name, Vector3 position, Vector3 target)
         {
             camera.transform.position = position;
             camera.transform.LookAt(target);

@@ -2,6 +2,8 @@
 
 These are intended models, not a claim that all systems are implemented.
 
+The five-deck gameplay prototype models climbing as a bounded contact reaction through a held ring: it compensates local gravity and steers the dynamic capsule toward a hang point, then above the floor and onto a landing when the player holds W. It is a gameplay approximation, not simulated arms, stamina or biomechanical strength. Release removes the assist; no ledge grip means no climbing force. Pull-up is enabled only when effective gravity aligns with the deck's up direction. Collisions remain active and falls currently cause no damage. Coasting retains the earlier contact-only movement model.
+
 | Quantity/model | Convention |
 | --- | --- |
 | Local physics | SI: metres, seconds, kilograms; +Y up in the initial test room |

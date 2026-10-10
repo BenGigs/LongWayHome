@@ -23,6 +23,7 @@ namespace LongWayHome.Player
         private Vector3 contactNormal;
         private Collider contactSurface;
         private CapsuleCollider capsule;
+        private LedgeClimber climber;
         public bool IsGrounded { get; private set; }
         public bool HasRail => (leftHand != null && leftHand.IsAnchored) || (rightHand != null && rightHand.IsAnchored);
 
@@ -31,6 +32,7 @@ namespace LongWayHome.Player
             body = GetComponent<Rigidbody>();
             gravityBody = GetComponent<ShipGravityBody>();
             capsule = GetComponent<CapsuleCollider>();
+            climber = GetComponent<LedgeClimber>();
             if (view == null)
             {
                 Debug.LogError("PlayerMovement requires a view transform.", this);
@@ -53,6 +55,11 @@ namespace LongWayHome.Player
             IsGrounded = powered && UnityEngine.Physics.SphereCast(body.position, 0.28f, -up,
                 out RaycastHit hit, 0.8f, groundLayers, QueryTriggerInteraction.Ignore) && Vector3.Dot(hit.normal, up) > 0.65f;
 
+            if (climber != null && climber.Tick(movement, gravity, up, leftHand, rightHand))
+            {
+                pushRequested = false;
+                return;
+            }
             bool pushed = pushRequested && TryPush(powered, up);
             pushRequested = false;
             if (pushed) return;

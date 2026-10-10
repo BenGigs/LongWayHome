@@ -1,5 +1,13 @@
 # Architecture
 
+## Five-deck gameplay test
+
+FiveDeckGameplay is a standalone movement test scene and the first Windows build scene. Bootstrap/ShipInterior remain available unchanged for the earlier regression suite. The Editor-generated test geometry uses an 8 m cylindrical room stack, 3.2 m deck spacing and a 2.1 m offset opening. Mesh decks and segmented orange grip colliders leave the shaft clear. There are no poles, doors, stairs or guardrails. Room fixtures are deliberately simple placeholders; no Blender mesh import is required to test the mechanics.
+
+Each ring has a LedgeRing defining the deck plane and radial hang/landing targets. HandInteractor retains raycast occlusion and reach limits. Holding a grab button retries acquisition so a jump can bring a ring into reach; upper ledges cannot be caught while grounded. LedgeClimber, when present, is ticked by PlayerMovement: it uses bounded velocity corrections and gravity compensation through a held ring to hang, rise inside the shaft, then cross onto the floor while W is held. The Rigidbody remains dynamic and collidable throughout. Releasing W stops pull-up motion; releasing all ledge grips or switching to coasting cancels the assist. The grip remains held on landing. Existing non-ledge rails use the original locomotion path.
+
+GameplayReset reloads only the active test scene on R while unpaused. There is no fall damage in this playtest. Scientific resource/navigation systems and polished art remain outside this test.
+
 ## Foundation
 
 `Bootstrap` stays loaded and owns `SceneBootstrap`, which validates build scene availability, loads `ShipInterior` and `SpaceExterior` additively, then makes the interior active. No global singleton or DontDestroyOnLoad manager is needed. Start a normal session through Bootstrap. ShipInterior also works alone for quick movement inspection.

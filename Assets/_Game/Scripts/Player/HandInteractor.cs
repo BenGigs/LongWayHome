@@ -24,6 +24,8 @@ namespace LongWayHome.Player
         public bool IsAnchored => held != null && held.IsHandrail;
         public Vector3 PushNormal => railNormal;
         public string HeldName => held == null ? "empty" : held.name;
+        public LedgeRing HeldLedge => IsAnchored ? held.GetComponentInParent<LedgeRing>() : null;
+        public Vector3 GripPoint => held == null ? Vector3.zero : HeldPhysicsMatrix().MultiplyPoint3x4(localAnchor);
 
         public void RequestGrab()
         {
@@ -55,6 +57,11 @@ namespace LongWayHome.Player
             if (!UnityEngine.Physics.Raycast(view.position, view.forward, out RaycastHit hit,
                     reach, grabLayers, QueryTriggerInteraction.Ignore)) return false;
             var candidate = hit.collider.GetComponentInParent<Grabbable>();
+            var ledge = candidate != null ? candidate.GetComponentInParent<LedgeRing>() : null;
+            // Upper ledges are caught from a jump/fall, not by reaching through a ceiling
+            // while standing. Ordinary rails and floor-level rings retain their behavior.
+            if (ledge != null && Vector3.Dot(ledge.transform.position - playerBody.position, ledge.Up) > .25f &&
+                playerBody.TryGetComponent<PlayerMovement>(out var motor) && motor.IsGrounded) return false;
             if (candidate == null || !candidate.TryClaim(this)) return false;
 
             held = candidate;

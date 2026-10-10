@@ -8,3 +8,5 @@ Repository: https://github.com/BenGigs/LongWayHome
 Do not push directly to main or merge without explicit approval. No main branch was initialized by the agent. Once the user chooses the main branch policy, update the default/review branch conventions together. Use body files for multiline gh issue/PR descriptions. Do not duplicate these issues.
 
 - [M3: Spacecraft interior blockout — #4](https://github.com/BenGigs/LongWayHome/issues/4). Branch: feat/ship-interior, stacked on feat/ship-gravity. The user accepted the M2 movement baseline; M3 layout acceptance remains pending.
+
+- [Five-deck ledge traversal — #6](https://github.com/BenGigs/LongWayHome/issues/6). Branch feat/ledge-traversal based on feat/ship-interior; jump/catch/pull-up and zero-g gameplay testing.

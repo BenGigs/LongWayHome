@@ -63,9 +63,9 @@ namespace LongWayHome.Player
 
             if (toggleGravity.WasPressedThisFrame())
                 gravitySource.AccelerationLocal = gravitySource.AccelerationLocal.sqrMagnitude > 0.01f ? Vector3.zero : Vector3.up * 9.81f;
-            if (leftGrab.WasPressedThisFrame()) leftHand.RequestGrab();
+            if (leftGrab.IsPressed() && !leftHand.IsHolding) leftHand.RequestGrab();
             if (!leftGrab.IsPressed()) leftHand.RequestRelease();
-            if (rightGrab.WasPressedThisFrame()) rightHand.RequestGrab();
+            if (rightGrab.IsPressed() && !rightHand.IsHolding) rightHand.RequestGrab();
             if (!rightGrab.IsPressed()) rightHand.RequestRelease();
             if (jumpPush.WasPressedThisFrame()) motor.RequestPush();
 
@@ -107,6 +107,11 @@ namespace LongWayHome.Player
 
         private void OnGUI()
         {
+            var climber = GetComponent<LedgeClimber>();
+            if (climber != null)
+                GUI.Box(new Rect(16, 164, 620, 65),
+                    "FIVE-DECK PLAYTEST | W while gripping upper ring: pull up | R: reset\n" +
+                    climber.Status + "\nOpen hatches: release both grips to fall. No fall damage in this test.");
             GUI.Box(new Rect(16, 16, 560, paused ? 160 : 140),
                 "THE LONG WAY HOME — GRAVITY PROTOTYPE\n" +
                 "WASD: walk / pull while holding rail   |   Mouse: look\n" +
