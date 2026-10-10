@@ -7,7 +7,7 @@ import os
 from mathutils import Vector, Quaternion
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
-OUT = os.path.join(ROOT, 'LongWayHome_Expedition_v04.blend')
+OUT = os.path.join(ROOT, 'LongWayHome_Expedition_v05.blend')
 if os.path.exists(OUT) and '--replace-generated' not in __import__('sys').argv:
     raise RuntimeError('Review model exists. Save edits separately before explicitly regenerating.')
 bpy.ops.wm.read_factory_settings(use_empty=True)
@@ -122,7 +122,7 @@ def text(name,body,loc,size,col,mat):
 work.name='06 Deck 3 — workshop + robot deployment'
 hab.name='05 Deck 4 — habitat + water'
 cockpit.name='08 Deck 1 — cockpit'
-access.name='09 OPEN shaft — pole + grab rings (no barriers)'
+access.name='09 OPEN shaft — floor-edge grab rings only'
 refs.name='11 Human scale + labels'
 studio.name='12 Review lighting + cameras'
 details.name='10 Exterior details'
@@ -134,8 +134,8 @@ R=3.85
 SHAFT_X=0.9
 SHAFT_Y=-0.85
 HOLE=1.05
-POLE_X=SHAFT_X+HOLE-.18
-POLE_Y=SHAFT_Y
+
+
 floors=[6.2,9.4,12.6,15.8,19.0]
 levels=[(floors[0],fuel,'05  FUEL / STORAGE'),(floors[1],hab,'04  HABITAT / WATER'),
         (floors[2],work,'03  WORKSHOP / ROBOT'),(floors[3],nav,'02  NAVIGATION / SLEEP'),
@@ -177,12 +177,7 @@ for z,col,label in levels:
         box('Interior rib',(x,y,z+1.55),(.075,.075,2.95),shell_back,ivory)
     line('Warm room light',[(3.65*math.cos(a*math.pi/40),3.65*math.sin(a*math.pi/40),z+2.93) for a in range(41)],.025,col,lamp)
 
-# Continuous unobstructed drop path on the opposite side of the pole.
-cylinder('CLIMB POLE | continuous', (POLE_X,POLE_Y,(floors[0]+floors[-1]+2.8)/2),.065,floors[-1]+2.8-floors[0],access,dark,32)
-for i in range(34):
-    z=floors[0]+.25+i*.46
-    cylinder('Pole orange grip sleeve',(POLE_X,POLE_Y,z),.083,.22,access,orange,24)
-    cylinder('Pole luminous band',(POLE_X,POLE_Y,z+.13),.086,.025,access,bright,24)
+# Fully open transfer shaft; no pole, sleeves or other vertical obstructions.
 
 # Smooth cylindrical pressure hull, front half removable only in the review scene.
 for start,end,col in [(0,math.pi,shell_back),(math.pi,math.tau,shell_front)]:
@@ -316,7 +311,7 @@ full.view_layers[0].layer_collection.children[shell_front.name].exclude=False
 full.view_layers[0].layer_collection.children[refs.name].exclude=True
 full.camera=fullcam
 notes=bpy.data.texts.new('START HERE — five open decks');notes.use_fake_user=True
-notes.write('LWH v04 / FIVE OPEN DECKS\nTop to bottom: cockpit; navigation + open sleeping nook; workshop + robot deployment; habitat + water; fuel + storage.\nNo doors, stairs, guardrails or raised hatch barriers.\n2.1 m aligned hatch openings, offset from cabin centre. Deck-level orange grab rings and a side-mounted climbing pole leave an open falling/coasting path.\nBlender review geometry only: powered pole climbing is NOT implemented in Unity.\nScene selector: CUTAWAY or EXTERIOR. Front floor halves and front hull are hidden only in CUTAWAY. Full model contains complete decks.\n8 m cabin diameter; 25 m tall; 3.2 m deck pitch; units metres / Blender +Z up.\nMiddle mouse orbit; wheel zoom; Shift+middle mouse pan. Select named fixtures, G/R/S to edit. Save revisions under a new filename.\nThe robot deployment station reserves space only; lander packaging and pressure transfer remain future design work.\n')
+notes.write('LWH v05 / FIVE OPEN DECKS\nTop to bottom: cockpit; navigation + open sleeping nook; workshop + robot deployment; habitat + water; fuel + storage.\nNo doors, stairs, guardrails or raised hatch barriers.\n2.1 m aligned hatch openings, offset from cabin centre. Deck-level orange grab rings surround a completely clear falling/coasting path. Jump, catch the next deck edge, then pull up is the intended powered movement.\nBlender review geometry only: ledge grab / pull-up movement is NOT implemented in Unity.\nScene selector: CUTAWAY or EXTERIOR. Front floor halves and front hull are hidden only in CUTAWAY. Full model contains complete decks.\n8 m cabin diameter; 25 m tall; 3.2 m deck pitch; units metres / Blender +Z up.\nMiddle mouse orbit; wheel zoom; Shift+middle mouse pan. Select named fixtures, G/R/S to edit. Save revisions under a new filename.\nThe robot deployment station reserves space only; lander packaging and pressure transfer remain future design work.\n')
 bpy.context.window.scene=scene
 bpy.ops.object.select_all(action='DESELECT')
 for s in bpy.data.screens:
@@ -326,12 +321,12 @@ for s in bpy.data.screens:
             sp.shading.show_cavity=True;sp.overlay.show_overlays=False
             sp.region_3d.view_distance=36;sp.region_3d.view_location=(0,0,13)
             sp.region_3d.view_rotation=cutcam.rotation_euler.to_quaternion();sp.region_3d.view_perspective='PERSP'
-scene['Design revision']='v04 | 5 rooms, open hatches, no stairs/doors/guardrails'
-scene['Hatch diameter metres']=2.1;scene['Climbing implemented in Unity']=False
-os.makedirs(os.path.join(ROOT,'Previews','v04'),exist_ok=True)
+scene['Design revision']='v05 | 5 rooms, open hatches, no stairs/doors/guardrails'
+scene['Hatch diameter metres']=2.1;scene['Ledge pull-up implemented in Unity']=False
+os.makedirs(os.path.join(ROOT,'Previews','v05'),exist_ok=True)
 bpy.ops.wm.save_as_mainfile(filepath=OUT,compress=True)
 for active,cam,name in [(scene,cutcam,'cutaway'),(full,fullcam,'exterior'),(scene,detailcam,'grab-rings')]:
     bpy.context.window.scene=active;active.camera=cam
-    active.render.filepath=os.path.join(ROOT,'Previews','v04',name+'.png')
+    active.render.filepath=os.path.join(ROOT,'Previews','v05',name+'.png')
     bpy.ops.render.render(write_still=True)
 print('FIVE_DECK_MODEL_OK',OUT,len(bpy.data.objects),flush=True)
