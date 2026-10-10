@@ -6,11 +6,11 @@ Implemented: Unity-generated URP project; Input System; project folders; three-s
 
 Verification status is recorded in README.md. Human movement-feel and visual review remain part of acceptance even after automated checks pass.
 
-## Milestone 2 — first prototype implemented, acceptance pending
+## Milestone 2 — movement baseline accepted
 
-Playtest feedback: the user reports that either hand feels good on the rail, but loose objects spin instead of feeling held. Tool grips now constrain pickup orientation relative to the hand; the rail behavior is preserved. Recheck tool stability, turning and release in both gravity states before accepting M2.
+The user approved the rail grabbing, then confirmed that the corrected tool grip feels good. This establishes the movement baseline for M3. The fix passed 12 PlayMode tests and a Windows build. Further tuning can follow layout playtests; this is not a claim of final production polish.
 
-The scene now includes a configurable acceleration source, per-body gravity, gravity-relative grounded movement, coasting inertia, two hand markers, rail constraints/pulling, a wrench and sample canister, contact push-off and G gravity toggle. Input, locomotion, hands and gravity are separate components. Implementation uses the plan below; automated verification is recorded in README. Human stability/feel review and tuning remain required before marking M2 accepted or moving to M3.
+The movement baseline includes a configurable acceleration source, per-body gravity, gravity-relative grounded movement, coasting inertia, two hand markers, rail constraints/pulling, a wrench and sample canister, contact push-off and G gravity toggle. Input, locomotion, hands and gravity are separate components. The implementation sequence is retained below; automated verification is recorded in README.
 
 1. Replace the temporary controller's global gravity dependency with ShipGravityController exposing a ship-local acceleration vector and ShipGravityBody applying -a in FixedUpdate with useGravity disabled. Test zero, intermediate, 1g, reversed and rotated vectors, independent of mass.
 2. Implement Rigidbody PlayerMovement relative to gravity/contact normals; grounded acceleration and slope/contact tolerances. During free float retain momentum; WASD cannot add thrust. Make transition thresholds explicit and test both directions.
@@ -19,9 +19,14 @@ The scene now includes a configurable acceleration source, per-body gravity, gra
 5. Add a test-only 1g/coasting control driving the vector, not a gameplay gravity boolean. Test rapid transitions, rail grabs during acceleration, wall impacts, dropped wrench and repeated release/regrab. Tune stability before adding IK or visuals.
 6. Record automated vector/inertia/constraint checks and manually playtest the complete walk → coast → rail pull → wrench handling → powered walking loop. Review movement enjoyment with the user before Milestone 3.
 
+## Milestone 3 — spacecraft blockout, ready for layout playtest
+
+Three areas share a compact 10 × 14 m deck with +Y thrust normal to the floor: habitat/greenhouse, workshop and cockpit. Open hatch frames and rail segments connect the central passage. Fixtures reserve space for crops/water, food preparation, one sleeping berth, robot docking, workbench/tool storage, one pilot seat and consoles. A clear collision window forms the cockpit pressure boundary. All systems beyond movement remain placeholders.
+
+The previous M2 room is preserved as GravityPrototype.unity for comparison. Existing player/hand code remains the accepted baseline. Acceptance: walk and rail-pull through all areas, in both directions, inspect windows and work surfaces, and review the layout before M4. Verification details are recorded in README.
+
 ## Later milestones
 
-3. Compact upright ship blockout: cockpit, workshop, greenhouse, connectors and traversable rails in both gravity states.
 4. Configurable Aster/Nivalis/Eos system, navigation hologram, manual local flight, autopilot and basic scanning.
 5. Named robot, modules, deployment/recovery, deterministic surveys, repairs and permanent loss.
 6. One crop, food, enclosed irrigation, water reservoir/recycling/filter wear and consequences.
@@ -29,3 +34,11 @@ The scene now includes a configurable acceleration source, per-body gravity, gra
 8. Lighting/audio/UI polish, performance, balancing and external playtesting of the 15–20 minute slice.
 
 Estimates in the original brief are preliminary. Full launch, extended galaxy, detailed orbital physics and broader survival remain post-slice features.
+
+M3 follow-up: user requested grip-preserving, stronger jumps and selected an upright expedition ship with stacked decks, a practical exterior and a warm cabin. The Blender design proposal is recorded in GAME_DESIGN.md. Review deck circulation and silhouette before replacing the current Unity blockout; M4 remains later work.
+
+M3 Blender review model: ArtSource/Ship/LongWayHome_Expedition_v03.blend contains editable cutaway and exterior scenes, three furnished decks, spiral stairs/shaft, a human reference and propulsion/radiator silhouettes. v01/v02 are retained locally as earlier review snapshots. Rendered previews accompany the source. This is a design study awaiting user changes, not a replacement for the Unity scene or a validated production mesh.
+
+Current M3 design supersedes the three-deck stair model: v04 has five cylindrical stacked rooms, no doors/stairs/guardrails, open aligned hatches, floor-level grab rings and a side-mounted climbing pole. Navigation includes an open sleeping nook. Blender review first; powered pole climbing and the new layout's Unity integration remain pending.
+
+M3 v05 supersedes the pole: remove it entirely and preserve floor-edge grab rings. Planned powered traversal is jump, catch the next deck and pull up. The shaft stays clear for falling/coasting. Unity ledge catching and pull-ups remain pending; the existing rail motor does not implement them.

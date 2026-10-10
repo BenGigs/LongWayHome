@@ -26,3 +26,15 @@ Verify atmosphere, pressure, water, temperature, radiation, gravity, stability a
 Target a polished 15–20 minute slice only after the mechanics work. Full interactive rocket launch, galaxy generation, detailed orbital dynamics, multiple systems, fabrication, expanded crops, historical Earth messages and cinematic endings are later work.
 
 Do not settle the final title, Earth's catastrophe, ship appearance, astronaut lifespan/medical technology, total system count, propulsion/energy technology, Earth confirmation or final narrative without discussion. Milestone 1 makes no such commitments.
+
+## Ship design — current five-deck direction
+
+The user chose an upright cylindrical ship with five stacked rooms, an open sleeping nook, and thrust-generated gravity. Top to bottom: cockpit; navigation plus sleeping; workshop plus robot deployment; habitat/greenhouse plus water; fuel plus storage. Engines sit below the fuel/storage room. The proposed flat layout and earlier three-deck stair design are superseded.
+
+There are no room doors, stairs, guardrails or raised hatch barriers in the current concept. Aligned open floor hatches allow the astronaut to fall or coast freely between decks. Orange grab rings sit at floor level around the openings. The user removed the climbing pole. The entire shaft stays clear. Under gravity the intended interaction is jump, catch the next floor-edge ring, then pull up onto that deck. In coasting it is grabbing/pulling and releasing to drift. Ledge catching and pulling onto the next floor are not implemented in Unity yet. Jumping must continue to preserve grips.
+
+The v05 Blender study uses an 8 m diameter cabin, 25 m overall height, five decks at 6.2 / 9.4 / 12.6 / 15.8 / 19 m, and aligned 2.1 m hatch openings offset from the cabin centre. Without stairs the cabin returns to the smaller diameter. These dimensions remain adjustable through review. Cutaway and exterior scenes share editable fixtures. Cutaway hides the front hull, cap and front floor sections to expose the rooms; it is not the actual open-sided hull. A 1.8 m human reference establishes scale.
+
+Visual direction remains a practical ivory/graphite exterior, orange grab targets, warm interior lighting, muted green bedding, personal belongings in the open sleeping nook and living plants. The cockpit has upper wraparound windows. Navigation has its own table on the deck below. The workshop robot cradle is a space reservation; the reusable lander, pressure transfer and deployment engineering are unresolved. Fuel vessels are sealed fixtures within the service room. Drive and radiator shapes remain speculative placeholders.
+
+Keep source .blend files outside Unity Assets. Review the geometry before importing selected meshes and simple collision shapes into Unity. The existing Unity movement testbed is unchanged. Future work must implement and test jump-to-ledge catching, pulling onto decks, grab-ring interactions, collision/headroom and free falling through these openings. The v03 model remains as a historical design snapshot, not the current plan.

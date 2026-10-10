@@ -11,3 +11,4 @@
 - Update roadmap and scientific assumptions when behavior changes. Preserve unresolved narrative/technology decisions for discussion.
 - All scene creation in FoundationSetup is one-time and refuses to overwrite existing foundation scenes. Normal startup opens Bootstrap; do not rerun generation to reset user changes.
 - GravityPrototypeSetup upgrades the existing interior/prefab once and refuses to run twice. The committed scene already contains this upgrade. Preserve scene overrides binding player input and gravity body to the scene's gravity source.
+- ShipBlockoutSetup adds the M3 layout once, preserving GravityPrototype.unity outside the build list. Do not regenerate the committed layout. For visual inspection, run ShipBlockoutPreview.Capture in a separate graphics-enabled batch Editor; it writes ignored preview PNGs without saving camera changes. M3 is on feat/ship-interior, based on feat/ship-gravity; do not merge either branch without approval.

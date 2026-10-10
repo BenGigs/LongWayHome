@@ -114,7 +114,7 @@ namespace LongWayHome.Tests
         }
 
         [UnityTest]
-        public IEnumerator RailAllowsPullAndPushOffReleasesBothHands()
+        public IEnumerator RailAllowsPullAndPushWhileKeepingBothHands()
         {
             Source.AccelerationLocal = Vector3.zero;
             var body = Player.GetComponent<Rigidbody>();
@@ -134,11 +134,52 @@ namespace LongWayHome.Tests
             InputSystem.QueueStateEvent(keyboard, new KeyboardState(Key.W));
             yield return new WaitForSeconds(0.2f);
             Assert.That(body.position.z, Is.GreaterThan(start + 0.05f));
+            InputSystem.QueueStateEvent(keyboard, new KeyboardState());
+            yield return new WaitForSeconds(0.25f);
             InputSystem.QueueStateEvent(keyboard, new KeyboardState(Key.Space));
             yield return new WaitForSeconds(0.1f);
-            Assert.That(hands[0].IsHolding || hands[1].IsHolding, Is.False);
+            Assert.That(hands[0].IsAnchored && hands[1].IsAnchored, Is.True);
             Assert.That(body.linearVelocity.z, Is.LessThan(0), "Push away from the forward rail.");
+            Assert.That(body.GetComponents<ConfigurableJoint>().Length, Is.EqualTo(2));
+            InputSystem.QueueStateEvent(mouse, new MouseState());
+            yield return new WaitForSeconds(0.1f);
+            Assert.That(hands[0].IsHolding || hands[1].IsHolding, Is.False);
             Assert.That(body.GetComponents<ConfigurableJoint>().Length, Is.Zero);
+        }
+
+        [UnityTest]
+        public IEnumerator PoweredJumpKeepsRailAndToolAndHasStrongerArc()
+        {
+            Player.enabled = false;
+            var body = Player.GetComponent<Rigidbody>();
+            var motor = Player.GetComponent<PlayerMovement>();
+            var view = Player.GetComponentInChildren<Camera>().transform;
+            var hands = Player.GetComponentsInChildren<HandInteractor>();
+            var rail = GameObject.Find("Handrail").GetComponent<Collider>();
+            view.LookAt(rail.ClosestPoint(view.position));
+            Assert.That(hands[0].TryGrab(), Is.True);
+            var tool = CreateBody("Jump test tool", 1, view.position + Vector3.forward * 0.8f);
+            tool.gameObject.AddComponent<Grabbable>();
+            UnityEngine.Physics.SyncTransforms();
+            view.LookAt(tool.position);
+            Assert.That(hands[1].TryGrab(), Is.True);
+            yield return new WaitForSeconds(0.2f);
+            Assert.That(motor.IsGrounded, Is.True);
+            float start = body.position.y;
+            float peak = start;
+            motor.RequestPush();
+            for (int step = 0; step < 45; step++)
+            {
+                yield return new WaitForFixedUpdate();
+                peak = Mathf.Max(peak, body.position.y);
+                Assert.That(hands[0].IsAnchored, Is.True, "Jump must keep the rail grip.");
+                Assert.That(hands[1].IsHolding, Is.True, "Jump must keep the carried tool.");
+            }
+            Assert.That(peak - start, Is.InRange(0.65f, 0.95f), "An unobstructed 4 m/s jump should rise about 0.8 m at 1g.");
+            Assert.That(body.position.y, Is.LessThan(start + 0.15f), "The player should return to the deck.");
+            hands[0].Release();
+            hands[1].Release();
+            Object.Destroy(tool.gameObject);
         }
 
         private static Rigidbody CreateBody(string name, float mass, Vector3 position)
