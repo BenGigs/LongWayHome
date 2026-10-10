@@ -24,3 +24,8 @@ sysinfo.txt
 crashlytics-build.properties
 .DS_Store
 Thumbs.db
+*.blend1
+*.blend2
+# Earlier local design-review snapshots; current reviewed source is v03.
+ArtSource/Ship/LongWayHome_Expedition_v01.blend
+ArtSource/Ship/LongWayHome_Expedition_v02.blend

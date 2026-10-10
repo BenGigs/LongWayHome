@@ -36,3 +36,5 @@ The previous M2 room is preserved as GravityPrototype.unity for comparison. Exis
 Estimates in the original brief are preliminary. Full launch, extended galaxy, detailed orbital physics and broader survival remain post-slice features.
 
 M3 follow-up: user requested grip-preserving, stronger jumps and selected an upright expedition ship with stacked decks, a practical exterior and a warm cabin. The Blender design proposal is recorded in GAME_DESIGN.md. Review deck circulation and silhouette before replacing the current Unity blockout; M4 remains later work.
+
+M3 Blender review model: ArtSource/Ship/LongWayHome_Expedition_v03.blend contains editable cutaway and exterior scenes, three furnished decks, spiral stairs/shaft, a human reference and propulsion/radiator silhouettes. v01/v02 are retained locally as earlier review snapshots. Rendered previews accompany the source. This is a design study awaiting user changes, not a replacement for the Unity scene or a validated production mesh.

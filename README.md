@@ -27,6 +27,16 @@ The prototype uses simple hand markers, rail reach constraints and spring-driven
 
 ## Dependencies and project organization
 
+### Blender ship design study
+
+Open `ArtSource/Ship/LongWayHome_Expedition_v03.blend` with Blender 5.0. The default scene is **01 CUTAWAY — interior review**. Switch the scene selector to **02 EXTERIOR — complete hull** for the full ship. Middle mouse orbits, the wheel zooms, Shift + middle mouse pans, and Numpad 0 shows the review camera. The Outliner groups hull sections, each deck, stairs, fixtures and lighting separately. Select a fixture and use G/R/S to move, rotate or scale it. Save design revisions under a new filename.
+
+This editable concept has a 10 m cabin diameter, 24 m overall height, three decks and a 1.8 m human reference. The cabin was widened from the initial 8 m proposal to reserve a 1.2 m stair around a 2 m zero-g shaft. These dimensions and fixture positions are for review; circulation and collision have not been imported or playtested in Unity. Blender +Z is ship-up, while the Unity testbed uses +Y. The drive and radiators are speculative shape placeholders. Source files stay outside Unity Assets.
+
+`ArtSource/Ship/build_ship.py` reproducibly creates the model and preview renders using Blender's Python API. It refuses to overwrite the generated .blend unless explicitly passed `--replace-generated`; do not regenerate over manual edits. The original Unity ship blockout remains unchanged. The .blend includes a **START HERE** text block with review instructions.
+
+Verified with Blender 5.0.1: reviewed exterior, cutaway and cabin-detail renders; reopened the saved v03 model in a fresh process and confirmed both scene visibility states, metric units, deck collections, 40 stair treads, and 24 m overall mesh height. The model contains 443 editable objects. This validation does not establish gameplay clearance or production mesh suitability.
+
 Unity's installed Universal 3D template generated this project. Direct packages include URP **17.3.0**, Input System **1.17.0**, Test Framework **1.6.0** and Unity UI **2.0.0**. The complete authoritative lists are `Packages/manifest.json` and `Packages/packages-lock.json`. Bundled template utilities are retained; none is a gameplay dependency unless referenced by our assembly definitions. Input System is the active backend. Text serialization and visible meta files are enabled.
 
 - `Assets/_Game/Scenes`: Bootstrap, ShipInterior, SpaceExterior; GravityPrototype is the preserved M2 room and is excluded from builds.
