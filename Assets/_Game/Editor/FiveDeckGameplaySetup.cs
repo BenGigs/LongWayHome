@@ -46,6 +46,8 @@ namespace LongWayHome.Editor
             bottom.AddComponent<MeshCollider>().sharedMesh = bottom.GetComponent<MeshFilter>().sharedMesh;
             var mesh = Annulus();
             AssetDatabase.CreateAsset(mesh, Root + "Art/Models/GameplayDeck.asset");
+            var ringMesh = Annulus(true);
+            AssetDatabase.CreateAsset(ringMesh, Root + "Art/Models/GameplayRing.asset");
             string[] names = { "05 FUEL / STORAGE", "04 HABITAT / WATER", "03 WORKSHOP / ROBOT", "02 NAVIGATION / SLEEP", "01 COCKPIT" };
             for (int deck = 0; deck < 5; deck++)
             {
@@ -63,14 +65,7 @@ namespace LongWayHome.Editor
                 ring.transform.SetParent(room.transform); ring.transform.position = Shaft + Vector3.up * y;
                 var data = new SerializedObject(ring.GetComponent<Grabbable>());
                 data.FindProperty("handrail").boolValue = true; data.ApplyModifiedPropertiesWithoutUndo();
-                for (int segment = 0; segment < 24; segment++)
-                {
-                    float a = segment * Mathf.PI * 2 / 24;
-                    Vector3 point = Shaft + new Vector3(Mathf.Sin(a) * 1.03f, y - .18f, Mathf.Cos(a) * 1.03f);
-                    var grip = Box("Orange ring grip", point, new Vector3(.285f, .14f, .14f), amber);
-                    grip.transform.rotation = Quaternion.Euler(0, a * Mathf.Rad2Deg, 0);
-                    grip.transform.SetParent(ring.transform, true);
-                }
+                if (deck > 0) AddFlushRing(ring.transform, ringMesh, amber);
                 Label(names[deck], new Vector3(0, y + 2.3f, 3.65f));
                 var light = new GameObject("Deck light").AddComponent<Light>();
                 light.transform.position = new Vector3(0, y + 2.6f, 0); light.type = LightType.Point;
@@ -121,13 +116,6 @@ namespace LongWayHome.Editor
                 UnityEngine.Object.DestroyImmediate(bottom.GetComponent<Collider>());
                 bottom.AddComponent<MeshCollider>().sharedMesh = bottom.GetComponent<MeshFilter>().sharedMesh;
             }
-            foreach (var ring in UnityEngine.Object.FindObjectsByType<LedgeRing>(FindObjectsSortMode.None))
-                foreach (Transform segment in ring.transform)
-                {
-                    Vector3 position = segment.position;
-                    position.y = ring.transform.position.y - .18f;
-                    segment.position = position;
-                }
             EditorSceneManager.MarkSceneDirty(scene);
             EditorSceneManager.SaveScene(scene);
             Debug.Log("GAMEPLAY_DECK_NORMALS_OK");
@@ -151,7 +139,55 @@ namespace LongWayHome.Editor
             FoundationSetup.BuildWindows();
         }
 
-        private static Mesh Annulus()
+        public static void MakeRingsFlush()
+        {
+            var scene = EditorSceneManager.OpenScene(ScenePath);
+            var deck = AssetDatabase.LoadAssetAtPath<Mesh>(Root + "Art/Models/GameplayDeck.asset");
+            var replacement = Annulus();
+            EditorUtility.CopySerialized(replacement, deck);
+            UnityEngine.Object.DestroyImmediate(replacement);
+            EditorUtility.SetDirty(deck);
+            string path = Root + "Art/Models/GameplayRing.asset";
+            var ringMesh = AssetDatabase.LoadAssetAtPath<Mesh>(path);
+            replacement = Annulus(true);
+            if (ringMesh == null) { ringMesh = replacement; AssetDatabase.CreateAsset(ringMesh, path); }
+            else
+            {
+                EditorUtility.CopySerialized(replacement, ringMesh);
+                UnityEngine.Object.DestroyImmediate(replacement);
+                EditorUtility.SetDirty(ringMesh);
+            }
+            foreach (var ring in UnityEngine.Object.FindObjectsByType<LedgeRing>(FindObjectsSortMode.None))
+            {
+                for (int i = ring.transform.childCount - 1; i >= 0; i--)
+                {
+                    var child = ring.transform.GetChild(i);
+                    if (child.name == "Orange ring grip" || child.name == "Flush orange ring")
+                        UnityEngine.Object.DestroyImmediate(child.gameObject);
+                }
+                if (ring.transform.position.y > .1f) AddFlushRing(ring.transform, ringMesh, Load("WorkshopAmber"));
+            }
+            EditorSceneManager.MarkSceneDirty(scene);
+            EditorSceneManager.SaveScene(scene);
+            AssetDatabase.SaveAssets();
+            AssetDatabase.ImportAsset(Root + "Art/Models/GameplayDeck.asset", ImportAssetOptions.ForceUpdate);
+            AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceUpdate);
+            EditorSceneManager.OpenScene(ScenePath);
+            Directory.CreateDirectory("TestResults/BlockoutPreview");
+            ShipBlockoutPreview.Save(Camera.main, "flush-ring", Shaft + new Vector3(0, 5.3f, -1.8f), Shaft + Vector3.up * 3.2f);
+            Debug.Log("FLUSH_RINGS_OK");
+        }
+
+        private static void AddFlushRing(Transform parent, Mesh mesh, Material material)
+        {
+            var obj = new GameObject("Flush orange ring", typeof(MeshFilter), typeof(MeshRenderer), typeof(MeshCollider));
+            obj.transform.SetParent(parent, false);
+            obj.GetComponent<MeshFilter>().sharedMesh = mesh;
+            obj.GetComponent<MeshRenderer>().sharedMaterial = material;
+            obj.GetComponent<MeshCollider>().sharedMesh = mesh;
+        }
+
+        private static Mesh Annulus(bool ring = false)
         {
             const int segments = 96;
             int n = segments + 1;
@@ -163,8 +199,9 @@ namespace LongWayHome.Editor
                         float a = i * Mathf.PI * 2 / segments;
                         Vector3 ray = new Vector3(Mathf.Sin(a), 0, Mathf.Cos(a));
                         float b = Vector3.Dot(Shaft, ray);
-                        float r = outer == 0 ? 1.05f : -b + Mathf.Sqrt(b*b + 3.95f*3.95f - Shaft.sqrMagnitude);
-                        vertices.Add(Shaft + ray*r + Vector3.down*(layer == 0 ? .18f : 0));
+                        float r = ring ? (outer == 0 ? 1.05f : 1.2f) :
+                            (outer == 0 ? 1.2f : -b + Mathf.Sqrt(b*b + 3.95f*3.95f - Shaft.sqrMagnitude));
+                        vertices.Add((ring ? Vector3.zero : Shaft) + ray*r + Vector3.down*(layer == 0 ? .18f : 0));
                     }
             void Quad(int a, int b, int c, int d) { triangles.AddRange(new[] { a,b,c,a,c,d }); }
             for (int i = 0; i < segments; i++)
@@ -177,8 +214,12 @@ namespace LongWayHome.Editor
             // Unity's clockwise front faces: top surfaces face +Y.
             for (int i = 0; i < triangles.Count; i += 3)
                 (triangles[i + 1], triangles[i + 2]) = (triangles[i + 2], triangles[i + 1]);
-            var mesh = new Mesh { name = "Open circular deck" };
-            mesh.SetVertices(vertices); mesh.SetTriangles(triangles, 0); mesh.RecalculateNormals(); mesh.RecalculateBounds();
+            var mesh = new Mesh { name = ring ? "Flush orange rim" : "Open circular deck" };
+            // Split face vertices so the level top is not shaded like a rounded lip.
+            var flatVertices = new List<Vector3>(triangles.Count);
+            for (int i = 0; i < triangles.Count; i++) flatVertices.Add(vertices[triangles[i]]);
+            for (int i = 0; i < triangles.Count; i++) triangles[i] = i;
+            mesh.SetVertices(flatVertices); mesh.SetTriangles(triangles, 0); mesh.RecalculateNormals(); mesh.RecalculateBounds();
             return mesh;
         }
         private static Material Load(string name) => AssetDatabase.LoadAssetAtPath<Material>(Root + "Art/Materials/" + name + ".mat");

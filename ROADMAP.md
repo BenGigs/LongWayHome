@@ -48,3 +48,5 @@ Gameplay testing now takes priority over art: feat/ledge-traversal adds FiveDeck
 Human feedback approved the initial traversal. Current M3 tuning eases active pull-ups and adds input-gated, occlusion-checked ring aim tolerance to help select a deck during descent. Review the new feel before adding further braking or movement mechanics.
 
 User accepted the smoother climbing and catch tolerance. Follow-up adds A/D body shifts and S lowering while gripping, and removes the on-screen HUD/instructions/crosshair. This remains M3 traversal tuning.
+
+Traversal follow-up replaces the recessed segmented ring with a continuous flush rim. Ring and deck share their top plane, thickness and boundary so the player can cross the orange edge without encountering a step. The original opening diameter and grab behavior are retained.

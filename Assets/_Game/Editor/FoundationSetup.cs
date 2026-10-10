@@ -168,6 +168,11 @@ namespace LongWayHome.Editor
             BuildWindowsTo("Builds/WindowsSmooth/TheLongWayHome.exe");
         }
 
+        public static void BuildFlushPlaytest()
+        {
+            BuildWindowsTo("Builds/WindowsFlush/TheLongWayHome.exe");
+        }
+
         private static void BuildWindowsTo(string path)
         {
             BuildReport report = BuildPipeline.BuildPlayer(EditorBuildSettings.scenes,

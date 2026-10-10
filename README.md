@@ -14,7 +14,11 @@ Scenes, input references, player prefab and URP settings are already generated a
 
 ## Five-deck gameplay playtest
 
-Latest tuning build: `Builds/WindowsSmooth/TheLongWayHome.exe` (separate from the prior playtest). Rebuild with the batch Editor entry point `LongWayHome.Editor.FoundationSetup.BuildSmoothPlaytest`.
+Latest tuning build: `Builds/WindowsFlush/TheLongWayHome.exe` (separate from the prior playtest). Rebuild with the batch Editor entry point `LongWayHome.Editor.FoundationSetup.BuildFlushPlaytest`.
+
+Flush-rim verification: the full run passed the previous 24 tests; the new crossing check needed a longer traversal interval (`TestResults/flush-playmode.xml`). With the corrected interval and final mesh shading, all 10 ledge tests passed (`TestResults/flush-final.xml`), including same-height ring/deck ray checks and a capsule crossing the rim into a fall. The rendered seam was inspected. Unity generated the replacement continuous rim meshes and scene changes, preserving the deck GUID; metadata/whitespace audits passed.
+
+The flush-rim Windows build succeeded with Editor exit code 0 (`TestResults/flush-build.log`) and was launched for playtesting.
 
 Directional control verification: all 24 PlayMode tests passed (`TestResults/directional-playmode.xml`). After tightening sideways-only movement during a paused mantle, all 9 ledge tests passed again (`TestResults/directional-final.xml`). The new test checks left/right body movement, fixed hand anchors, lowering, pausing and resuming ascent. The user accepted the preceding smoothing/aim-assistance pass; directional movement awaits feel review.
 
@@ -31,7 +35,7 @@ Start in fuel/storage on the bottom deck. The orange ring above the open hatch i
 4. Press **G** to coast. While holding a ring, look where you want to move and use WASD to pull. Release to drift; WASD in open space adds no thrust. Space pushes only from contact or a held ring.
 5. **R** resets the test scene. **Escape** pauses/resumes and releases the cursor. Try missed catches, letting go mid-pull, falling several decks, and toggling gravity while attached. Report clipping, uncomfortable camera motion or catches that feel unreliable.
 
-Pull-ups keep the Rigidbody dynamic and collidable. The rings protrude slightly below the deck lip so the underside can be caught. This test uses simple Unity-generated geometry matching the five-deck dimensions; it does not yet import the Blender ship. The existing tool/gravity prototype below remains available through Bootstrap.
+Pull-ups keep the Rigidbody dynamic and collidable. The orange rims share the floor height and thickness, with a continuous mesh collider and no recessed step. The 2.1 m opening remains clear; the inner face and underside are grabbable. This test uses simple Unity-generated geometry matching the five-deck dimensions; it does not yet import the Blender ship. The existing tool/gravity prototype below remains available through Bootstrap.
 ## Try the gravity prototype
 
 - **G**: toggle 1g acceleration / zero-g coasting. The `Ship acceleration` scene object's Inspector exposes the actual acceleration vector for intermediate and other directions.

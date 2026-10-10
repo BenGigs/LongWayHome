@@ -240,6 +240,30 @@ namespace LongWayHome.Tests
         }
 
         [UnityTest]
+        public IEnumerator FlushRingMeetsFloorAndDoesNotCatchWalkingCapsule()
+        {
+            Player.enabled = false;
+            for (int deck = 1; deck <= 4; deck++)
+                foreach (float radius in new[] { 1.08f, 1.18f, 1.22f })
+                {
+                    Vector3 origin = Shaft + new Vector3(0, deck * 3.2f + .5f, -radius);
+                    Assert.That(UnityEngine.Physics.Raycast(origin, Vector3.down, out var hit, 1, 1), Is.True);
+                    Assert.That(hit.point.y, Is.EqualTo(deck * 3.2f).Within(.002f), "Ring and deck must share a walking plane.");
+                }
+            var body = Player.GetComponent<Rigidbody>();
+            body.position = Shaft + new Vector3(0, 4.25f, -1.7f);
+            body.linearVelocity = Vector3.zero;
+            yield return new WaitForSeconds(.2f);
+            Player.GetComponentInChildren<Camera>().transform.rotation = Quaternion.identity;
+            Player.GetComponent<PlayerMovement>().SetMovement(Vector2.up);
+            yield return new WaitForSeconds(.85f);
+            Player.GetComponent<PlayerMovement>().SetMovement(Vector2.zero);
+            Assert.That(body.position.y, Is.LessThan(3.9f), "Walking over the orange rim must enter a free fall, without snagging.");
+            Assert.That(body.linearVelocity.y, Is.LessThan(-1f), "The capsule must be falling, not resting on the rim.");
+            Assert.That(Player.GetComponentsInChildren<HandInteractor>()[0].IsHolding, Is.False);
+        }
+
+        [UnityTest]
         public IEnumerator PullUpCannotPassThroughAnObstruction()
         {
             Player.enabled = false;
