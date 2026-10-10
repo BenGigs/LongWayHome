@@ -4,7 +4,9 @@
 
 `Bootstrap` stays loaded and owns `SceneBootstrap`, which validates build scene availability, loads `ShipInterior` and `SpaceExterior` additively, then makes the interior active. No global singleton or DontDestroyOnLoad manager is needed. Start a normal session through Bootstrap. ShipInterior also works alone for quick movement inspection.
 
-ShipInterior contains an enclosed 10 × 14 × 4 metre test room, collision geometry, placeholder benches, lighting and a reusable player prefab. SpaceExterior is deliberately empty except for a marker object until Milestone 4. No launch simulation or spacecraft production layout yet.
+ShipInterior contains a 10 × 14 × 4 metre single-deck graybox. Habitat/greenhouse spans z=-7 to -1, workshop -1 to 3, and cockpit 3 to 7. Two open hatch frames provide a 3.2 m wide, 3.4 m high central passage. Rails at x=±1.25 m, y=1.45 m have 1.2 m segments with 5 cm gaps for handoffs; side rails provide access to fixtures. The cockpit window has a collider but no opaque pane mesh, preserving the pressure boundary while exposing the dark exterior. One berth and one pilot seat support the sole astronaut. +Y remains thrust-up, perpendicular to the deck. This is a reversible interior layout, not a commitment to the final rocket hull shape.
+
+The accepted M2 room is preserved in GravityPrototype.unity, outside the build scene list, for direct Editor comparison. SpaceExterior is deliberately empty until M4. No launch sequence, functional consoles, robot behavior, gardening or animated doors are implemented here. Door panels are represented in their retracted/open positions.
 
 `FoundationPlayer` retains its original asset identity but now owns only the private ShipControls clone, input dispatch, camera pitch, pause and prototype HUD. `PlayerMovement` owns FixedUpdate locomotion, yaw/gravity alignment, grounding and push-off. Capsule is 2 m tall, radius 0.35 m, mass 80 kg with continuous collision detection, interpolation and frozen physical rotation. Layer 2 excludes it from its ground/grab queries. Camera is a child at eye level. The IMGUI HUD is temporary.
 
@@ -19,6 +21,8 @@ Pause owns timeScale because there is one player and no other time systems; revi
 `FoundationSetup` is Editor-only. It creates scenes, materials, prefab and input using Unity APIs, preserves existing foundation scenes by refusing to overwrite them, configures visible meta files/text serialization, and writes the build scene list. It also exposes a Windows development build entry point. Generated assets are committed; routine setup does not rerun this tool.
 
 `GravityPrototypeSetup` is a one-time upgrade adding source bindings, movement/hands, G input, rail and tools to the existing interior. It preserves existing room geometry and asset GUIDs. Creating a fresh foundation also invokes this upgrade; normal users simply open the committed Bootstrap scene.
+
+`ShipBlockoutSetup` preserves the M2 scene, then replaces only known placeholder fixtures and the front wall. It adds grouped graybox areas, moves the existing tools to the workshop, and retains player/source bindings. The one-time command refuses to overwrite an existing blockout or comparison scene. `ShipBlockoutPreview.Capture` renders temporary inspection camera poses into ignored TestResults/BlockoutPreview PNGs without saving the camera changes.
 
 ## Future boundaries
 
