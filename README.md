@@ -23,7 +23,7 @@ Scenes, input references, player prefab and URP settings are already generated a
 
 Manual acceptance loop: walk and grab the rail; press G; look slightly up and hold W to pull; press Space to release/push away; observe drift without input thrust. Return to 1g, pick up the wrench and canister, coast, release a moving tool and observe inertia, then restore 1g and check that the objects settle. Repeat near walls and while holding both hands. Record jitter, clipping, excessive reach or uncomfortable camera motion before M3.
 
-The prototype uses simple hand markers, rail reach constraints and spring-driven tool grabs. Tools rotate freely about the grasp. No full-body IK, production repair interaction, robot, navigation, survival or science clocks yet.
+The prototype uses simple hand markers, rail reach constraints and spring-driven tool grabs. Tools preserve their pickup orientation relative to the hand, follow camera turns, and regain free rotation on release. No full-body IK, production repair interaction, robot, navigation, survival or science clocks yet.
 
 ## Dependencies and project organization
 
@@ -58,7 +58,14 @@ Test runs intentionally omit `-quit`: the test runner exits when complete. Read 
 
 ## Verification record
 
-M2 verification on 2026-10-10:
+M2 tool-grip fix on 2026-10-10:
+
+- User playtest feedback: either hand feels good on the rail; loose tools spin instead of feeling held.
+- Tool grips now preserve the pickup orientation relative to the hand and follow turns. Pickup anchors and joint frames use the current physics pose, avoiding stale interpolated poses. Release immediately restores free rotation and preserves momentum. Rail constraints are unchanged.
+- **12/12 PlayMode tests passed**, including the actual compound wrench in both hands under 1g and coasting, arresting initial spin, following view rotation, keeping the grasp point near the hand, and restoring angular/linear inertia on release. The existing rail tests also pass. Results: `TestResults/grip-playmode.xml` and `TestResults/grip-playmode.log`.
+- **Windows x64 development build succeeded**, with Unity exit code 0 in `TestResults/grip-build.log`. Retest wrench handling interactively; no scene regeneration is needed.
+
+Initial M2 verification on 2026-10-10:
 
 - **10/10 PlayMode tests passed** after the final physics-loop input changes. Coverage includes additive boot, walking/wall collision, pause, rotated/intermediate/reversed gravity and mass independence, free-flight inertia with WASD/Space input, repeated G transitions, two-hand object ownership/release, rail pulling and push-off, sleeping surface push-off, wall occlusion, and joint/collision cleanup on hand disable.
 - Results: `TestResults/gravity-playmode.xml` and `TestResults/gravity-playmode.log`. Grab tests wait for physics steps because grab requests are now consumed in FixedUpdate.

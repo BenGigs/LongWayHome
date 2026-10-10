@@ -157,6 +157,66 @@ namespace LongWayHome.Tests
         }
 
         [UnityTest]
+        public IEnumerator LeftHandHoldsWrenchOrientationAndReleasesSpin() => CheckWrenchGrip(0);
+
+        [UnityTest]
+        public IEnumerator RightHandHoldsWrenchOrientationAndReleasesSpin() => CheckWrenchGrip(1);
+
+        private IEnumerator CheckWrenchGrip(int handIndex)
+        {
+            Source.AccelerationLocal = Vector3.zero;
+            var player = Player;
+            player.enabled = false; // Drive the view directly; isolate the grip from locomotion/input.
+            player.GetComponent<PlayerMovement>().enabled = false;
+            var astronaut = player.GetComponent<Rigidbody>();
+            astronaut.isKinematic = true;
+            astronaut.position = new Vector3(0, 2, 0);
+            var view = player.GetComponentInChildren<Camera>().transform;
+            yield return new WaitForSeconds(0.1f);
+            var wrench = GameObject.Find("Wrench").GetComponent<Rigidbody>();
+            wrench.position = view.position + view.forward * 1.1f;
+            wrench.rotation = Quaternion.Euler(20, 25, 10);
+            wrench.linearVelocity = Vector3.zero;
+            wrench.angularVelocity = new Vector3(2, 3, 1);
+            UnityEngine.Physics.SyncTransforms();
+            Quaternion pickupRotation = Quaternion.Inverse(view.rotation) * wrench.rotation;
+            var hand = player.GetComponentsInChildren<HandInteractor>()[handIndex];
+            Assert.That(hand.TryGrab(), Is.True, "Aim at the real compound wrench collider.");
+
+            foreach (float acceleration in new[] { 9.81f, 0f })
+            {
+                Source.AccelerationLocal = Vector3.up * acceleration;
+                yield return new WaitForSeconds(0.6f);
+                Assert.That(Quaternion.Angle(view.rotation * pickupRotation, wrench.rotation), Is.LessThan(4f), $"A stationary grip must resist spinning under gravity or coasting. Held={hand.IsHolding}, spin={wrench.angularVelocity}, pose={wrench.rotation.eulerAngles}, expected={(view.rotation * pickupRotation).eulerAngles}, position={wrench.position}");
+                Assert.That(wrench.angularVelocity.magnitude, Is.LessThan(0.2f));
+                for (int i = 0; i < 30; i++)
+                {
+                    view.rotation = Quaternion.Euler(0.4f, 1.5f, 0) * view.rotation;
+                    yield return new WaitForFixedUpdate();
+                }
+                yield return new WaitForSeconds(0.3f);
+                Assert.That(hand.IsHolding, Is.True);
+                Assert.That(Quaternion.Angle(view.rotation * pickupRotation, wrench.rotation), Is.LessThan(4f), "The held pose must follow hand rotation, not freeze in world space.");
+                var grip = wrench.GetComponent<ConfigurableJoint>();
+                Assert.That(Vector3.Distance(wrench.transform.TransformPoint(grip.anchor), grip.connectedBody.position), Is.LessThan(0.12f));
+            }
+
+            Vector3 releaseSpin = new Vector3(0.1f, 0.7f, -0.1f);
+            Vector3 releaseVelocity = new Vector3(0.2f, 0, 0.3f);
+            wrench.angularVelocity = releaseSpin;
+            wrench.linearVelocity = releaseVelocity;
+            hand.Release();
+            Assert.That(wrench.angularVelocity, Is.EqualTo(releaseSpin));
+            Assert.That(wrench.linearVelocity, Is.EqualTo(releaseVelocity));
+            wrench.position = new Vector3(3, 2, 1); // Clear the astronaut for an isolated inertia check.
+            Quaternion releasedRotation = wrench.rotation;
+            yield return new WaitForSeconds(0.2f);
+            Assert.That(wrench.GetComponent<ConfigurableJoint>(), Is.Null);
+            Assert.That(Quaternion.Angle(releasedRotation, wrench.rotation), Is.GreaterThan(3f));
+            Assert.That(Vector3.Distance(wrench.angularVelocity, releaseSpin), Is.LessThan(0.02f));
+        }
+
+        [UnityTest]
         public IEnumerator SleepingSurfaceContactStillAllowsPush()
         {
             var body = Player.GetComponent<Rigidbody>();

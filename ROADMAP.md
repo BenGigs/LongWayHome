@@ -8,6 +8,8 @@ Verification status is recorded in README.md. Human movement-feel and visual rev
 
 ## Milestone 2 — first prototype implemented, acceptance pending
 
+Playtest feedback: the user reports that either hand feels good on the rail, but loose objects spin instead of feeling held. Tool grips now constrain pickup orientation relative to the hand; the rail behavior is preserved. Recheck tool stability, turning and release in both gravity states before accepting M2.
+
 The scene now includes a configurable acceleration source, per-body gravity, gravity-relative grounded movement, coasting inertia, two hand markers, rail constraints/pulling, a wrench and sample canister, contact push-off and G gravity toggle. Input, locomotion, hands and gravity are separate components. Implementation uses the plan below; automated verification is recorded in README. Human stability/feel review and tuning remain required before marking M2 accepted or moving to M3.
 
 1. Replace the temporary controller's global gravity dependency with ShipGravityController exposing a ship-local acceleration vector and ShipGravityBody applying -a in FixedUpdate with useGravity disabled. Test zero, intermediate, 1g, reversed and rotated vectors, independent of mass.
