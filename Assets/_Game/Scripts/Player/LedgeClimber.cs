@@ -5,7 +5,7 @@ namespace LongWayHome.Player
     [RequireComponent(typeof(Rigidbody))]
     public sealed class LedgeClimber : MonoBehaviour
     {
-        private enum Phase { None, Hanging, Rising, Crossing }
+        private enum Phase { None, Hanging, Rising, Crossing, Retreating, Lowering }
         [SerializeField, Min(0.1f)] private float climbSpeed = 2.4f;
         [SerializeField, Min(0.1f)] private float acceleration = 35f;
         [SerializeField, Min(0.01f)] private float pullResponseTime = .16f;
@@ -13,10 +13,9 @@ namespace LongWayHome.Player
         private Phase phase;
         private LedgeRing ring;
         private Vector3 grip;
+        private Vector3 lateralOffset;
         private bool waitingForMoveRelease;
         public bool IsActive => phase != Phase.None;
-        public string Status => waitingForMoveRelease ? "On deck — release W, then move normally" : phase == Phase.None ? "Jump, aim up and hold a grab button" :
-            phase == Phase.Hanging ? "Hanging — hold W to pull up; release grip to fall" : "Pulling up — keep W and grip held";
 
         private void Awake() => body = GetComponent<Rigidbody>();
 
@@ -49,6 +48,17 @@ namespace LongWayHome.Player
                 phase = Phase.Hanging;
             }
             ring.GetTargets(grip, out Vector3 hang, out Vector3 above, out Vector3 landing);
+            // Shift the body under the fixed hand grip, within the open hatch and arm reach.
+            lateralOffset = Vector3.ClampMagnitude(lateralOffset +
+                Vector3.ProjectOnPlane(transform.right, up).normalized *
+                (movement.x * 1.2f * Time.fixedDeltaTime), .35f);
+            hang += lateralOffset;
+            above += lateralOffset;
+            landing += lateralOffset;
+            if (movement.y < -.5f && phase != Phase.Retreating && phase != Phase.Lowering)
+                phase = phase == Phase.Crossing ? Phase.Retreating : Phase.Lowering;
+            if (movement.y > .5f && phase == Phase.Lowering) phase = Phase.Rising;
+            if (movement.y > .5f && phase == Phase.Retreating) phase = Phase.Crossing;
             Vector3 target = hang;
             if (phase == Phase.Hanging && movement.y > 0.5f && Vector3.Distance(body.position, hang) < 0.18f)
                 phase = Phase.Rising;
@@ -67,11 +77,23 @@ namespace LongWayHome.Player
                     return true;
                 }
             }
+            // Reverse a mantle by moving back into the opening before lowering.
+            if (phase == Phase.Retreating)
+            {
+                target = above;
+                if (Vector3.Distance(body.position, above) < .10f) phase = Phase.Lowering;
+            }
+            if (phase == Phase.Lowering) target = hang - up * .4f;
             Vector3 desired = Vector3.ClampMagnitude((target - body.position) * 6f, climbSpeed);
-            if (phase != Phase.Hanging && movement.y <= 0.5f) desired = Vector3.zero;
+            bool verticalInput = Mathf.Abs(movement.y) > .5f;
+            if (phase != Phase.Hanging && !verticalInput)
+            {
+                desired = Mathf.Abs(movement.x) > .01f
+                    ? Vector3.Project(desired, Vector3.ProjectOnPlane(transform.right, up)) : Vector3.zero;
+            }
             // Ease into pulling and around the lip without weakening the fall arrest.
             // Pausing W still brakes promptly; smoothing only applies to active pulling.
-            if (phase != Phase.Hanging && movement.y > .5f)
+            if (phase != Phase.Hanging && (verticalInput || Mathf.Abs(movement.x) > .01f))
                 desired = Vector3.Lerp(body.linearVelocity, desired,
                     1f - Mathf.Exp(-Time.fixedDeltaTime / pullResponseTime));
             // Muscle reaction through the held ring; remains dynamic and collidable.
@@ -82,7 +104,7 @@ namespace LongWayHome.Player
             return true;
         }
 
-        public void Cancel() { phase = Phase.None; ring = null; }
+        public void Cancel() { phase = Phase.None; ring = null; lateralOffset = Vector3.zero; }
         private void OnDisable() { Cancel(); waitingForMoveRelease = false; }
     }
 }

@@ -46,3 +46,5 @@ M3 v05 supersedes the pole: remove it entirely and preserve floor-edge grab ring
 Gameplay testing now takes priority over art: feat/ledge-traversal adds FiveDeckGameplay, catches/hanging/pull-ups, free drops, coasting and reset. Preserve earlier scenes for regression tests. This is still the M3 movement/layout playtest, not M4 navigation implementation.
 
 Human feedback approved the initial traversal. Current M3 tuning eases active pull-ups and adds input-gated, occlusion-checked ring aim tolerance to help select a deck during descent. Review the new feel before adding further braking or movement mechanics.
+
+User accepted the smoother climbing and catch tolerance. Follow-up adds A/D body shifts and S lowering while gripping, and removes the on-screen HUD/instructions/crosshair. This remains M3 traversal tuning.

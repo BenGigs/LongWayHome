@@ -2,6 +2,8 @@
 
 These are intended models, not a claim that all systems are implemented.
 
+Directional climbing shifts the body within a 0.35 m offset from the catch path and permits lowering 0.4 m below the normal hanging target. These are comfort/reach limits, not a simulated arm skeleton. Hand anchors remain fixed and releasing the grip removes support.
+
 Ring aim tolerance (28 cm around the camera ray) approximates the player reaching for a nearby visible grip, with unchanged 1.8 m reach. It only applies when grabbing is requested and does not brake free falls. Active pull-up response is eased over 0.16 s for comfort; collision and the contact-force limit remain in effect.
 
 The five-deck gameplay prototype models climbing as a bounded contact reaction through a held ring: it compensates local gravity and steers the dynamic capsule toward a hang point, then above the floor and onto a landing when the player holds W. It is a gameplay approximation, not simulated arms, stamina or biomechanical strength. Release removes the assist; no ledge grip means no climbing force. Pull-up is enabled only when effective gravity aligns with the deck's up direction. Collisions remain active and falls currently cause no damage. Coasting retains the earlier contact-only movement model.

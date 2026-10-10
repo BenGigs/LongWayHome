@@ -16,12 +16,16 @@ Scenes, input references, player prefab and URP settings are already generated a
 
 Latest tuning build: `Builds/WindowsSmooth/TheLongWayHome.exe` (separate from the prior playtest). Rebuild with the batch Editor entry point `LongWayHome.Editor.FoundationSetup.BuildSmoothPlaytest`.
 
+Directional control verification: all 24 PlayMode tests passed (`TestResults/directional-playmode.xml`). After tightening sideways-only movement during a paused mantle, all 9 ledge tests passed again (`TestResults/directional-final.xml`). The new test checks left/right body movement, fixed hand anchors, lowering, pausing and resuming ascent. The user accepted the preceding smoothing/aim-assistance pass; directional movement awaits feel review.
+
+The directional Windows build succeeded with Editor exit code 0 (`TestResults/directional-build.log`) and was launched for playtesting. Runtime HUD rendering was removed, including the crosshair and pause text.
+
 Tuning verification: 22/23 checks passed in `TestResults/smooth-playmode.xml`; the new ease-in test's initial timing bound was corrected for coroutine scheduling, then passed in `TestResults/smooth-ramp.xml`. Runtime code was unchanged between runs. These cover all 23 behaviors, including near-miss descent acquisition, blocked/out-of-reach rejection, four-deck ascent and free falls. Windows development build succeeded with Editor exit code 0 (`TestResults/smooth-build.log`). Human review of the new feel remains pending.
 
-Start in fuel/storage on the bottom deck. The orange ring above the open hatch is the next grab target. No poles, stairs, doors, guardrails or fall damage are included.
+Start in fuel/storage on the bottom deck. The orange ring above the open hatch is the next grab target. No poles, stairs, doors, guardrails or fall damage are included. On-screen instructions, status boxes and the crosshair are removed; Escape still pauses/resumes without a menu.
 
 1. Aim up at the orange ring, hold either mouse button, then press Space to jump. A held grab button retries while the target comes within reach. Floor collision still blocks grabs through solid deck surfaces.
-2. Keep the grab button held to hang. Hold **W** to pull into the opening, rise above the floor, and move onto its edge. Releasing W pauses the pull; releasing your grip lets you fall.
+2. Keep the grab button held to hang. Hold **W** to pull into the opening, rise above the floor, and move onto its edge. Use **A/D** to shift your body left/right beneath the fixed grip and **S** to lower yourself. Release movement keys to pause; releasing your grip lets you fall. Sideways travel is limited to 35 cm from the catch path, and lowering extends 40 cm below the normal hang.
 3. On landing, release W before walking again. Your grip stays held until you release its mouse button. Let go before jumping to the next ring. Repeat through habitat/water, workshop/robot, navigation/open sleeping nook, and cockpit.
    For descent, look toward the orange ring of the floor you want and hold a mouse button as it comes into reach. Ring targeting tolerates a near miss of up to 28 cm around the aim ray, with the same 1.8 m reach and solid-surface occlusion. Release both buttons to fall freely. Pull-ups now ease into motion and around the lip; release W to pause as before.
 4. Press **G** to coast. While holding a ring, look where you want to move and use WASD to pull. Release to drift; WASD in open space adds no thrust. Space pushes only from contact or a held ring.
@@ -31,7 +35,7 @@ Pull-ups keep the Rigidbody dynamic and collidable. The rings protrude slightly 
 ## Try the gravity prototype
 
 - **G**: toggle 1g acceleration / zero-g coasting. The `Ship acceleration` scene object's Inspector exposes the actual acceleration vector for intermediate and other directions.
-- **Hold left/right mouse** while aiming the crosshair at a tool or rail within 1.8 m: grab with the corresponding hand. Release the button to let go. Blue is left; amber is right.
+- **Hold left/right mouse** while aiming the centre of the view at a tool or rail within 1.8 m: grab with the corresponding hand. Release the button to let go. Blue is left; amber is right.
 - **WASD**: walk while grounded. While holding a rail, pull in the camera's forward/right directions, including vertically when looking up/down. In free float, WASD adds no thrust.
 - **Space**: jump from the floor, or push away from a contacted static surface / held rail in zero-g. Jumping and pushing keep both grips; release each mouse button to let go. Floor jumps use a separate 4 m/s impulse (about 0.8 m rise at 1g when unobstructed). Space in open space does nothing.
 - The rail is to the left of the starting position. The wrench and sample canister sit on the right-hand shelf in the workshop, through the first hatch. Aim at each in turn to hold two different objects.

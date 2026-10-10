@@ -207,6 +207,39 @@ namespace LongWayHome.Tests
         }
 
         [UnityTest]
+        public IEnumerator HeldRingAllowsLeftRightLowerAndResumeClimb()
+        {
+            Player.enabled = false;
+            yield return Catch(0, 1);
+            yield return new WaitForSeconds(.8f);
+            var body = Player.GetComponent<Rigidbody>();
+            var motor = Player.GetComponent<PlayerMovement>();
+            var hand = Player.GetComponentsInChildren<HandInteractor>()[0];
+            Vector3 start = body.position;
+            Vector3 anchor = hand.GripPoint;
+            motor.SetMovement(Vector2.left);
+            yield return new WaitForSeconds(.65f);
+            Assert.That(body.position.x, Is.LessThan(start.x - .2f));
+            motor.SetMovement(Vector2.right);
+            yield return new WaitForSeconds(1);
+            Assert.That(body.position.x, Is.GreaterThan(start.x + .2f));
+            motor.SetMovement(Vector2.down);
+            yield return new WaitForSeconds(.8f);
+            Assert.That(body.position.y, Is.LessThan(start.y - .25f));
+            Assert.That(hand.IsHolding, Is.True);
+            Assert.That(Vector3.Distance(hand.GripPoint, anchor), Is.LessThan(.001f), "Body movement must not slide the hand anchor.");
+            motor.SetMovement(Vector2.zero);
+            yield return new WaitForSeconds(.2f);
+            Vector3 paused = body.position;
+            yield return new WaitForSeconds(.3f);
+            Assert.That(Vector3.Distance(body.position, paused), Is.LessThan(.06f));
+            motor.SetMovement(Vector2.up);
+            yield return new WaitForSeconds(4);
+            Assert.That(body.position.y, Is.InRange(4.15f, 4.4f));
+            Assert.That(hand.IsHolding, Is.True);
+        }
+
+        [UnityTest]
         public IEnumerator PullUpCannotPassThroughAnObstruction()
         {
             Player.enabled = false;
