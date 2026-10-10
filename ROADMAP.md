@@ -6,7 +6,9 @@ Implemented: Unity-generated URP project; Input System; project folders; three-s
 
 Verification status is recorded in README.md. Human movement-feel and visual review remain part of acceptance even after automated checks pass.
 
-## Milestone 2 — next, not implemented
+## Milestone 2 — first prototype implemented, acceptance pending
+
+The scene now includes a configurable acceleration source, per-body gravity, gravity-relative grounded movement, coasting inertia, two hand markers, rail constraints/pulling, a wrench and sample canister, contact push-off and G gravity toggle. Input, locomotion, hands and gravity are separate components. Implementation uses the plan below; automated verification is recorded in README. Human stability/feel review and tuning remain required before marking M2 accepted or moving to M3.
 
 1. Replace the temporary controller's global gravity dependency with ShipGravityController exposing a ship-local acceleration vector and ShipGravityBody applying -a in FixedUpdate with useGravity disabled. Test zero, intermediate, 1g, reversed and rotated vectors, independent of mass.
 2. Implement Rigidbody PlayerMovement relative to gravity/contact normals; grounded acceleration and slope/contact tolerances. During free float retain momentum; WASD cannot add thrust. Make transition thresholds explicit and test both directions.

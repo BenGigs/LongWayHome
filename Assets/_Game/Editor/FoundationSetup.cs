@@ -84,6 +84,7 @@ namespace LongWayHome.Editor
                 new EditorBuildSettingsScene(Root + "Scenes/" + name + ".unity", true)).ToArray();
             AssetDatabase.SaveAssets();
             Debug.Log("FOUNDATION_SETUP_OK");
+            GravityPrototypeSetup.Upgrade();
         }
 
         private static InputActionAsset CreateInput()

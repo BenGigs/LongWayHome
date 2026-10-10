@@ -1,25 +1,36 @@
 # The Long Way Home
 
-A quiet, first-person scientific space exploration and survival game. One astronaut remains aboard a compact spacecraft, searching for humanity's next home. This repository currently implements **Milestone 1: Project Foundation**, not the full game.
+A quiet, first-person scientific space exploration and survival game. One astronaut remains aboard a compact spacecraft, searching for humanity's next home. **Milestone 1 is implemented; Milestone 2's first gravity and two-hand prototype is ready for validation.**
 
 ## Open and run
 
 1. In Unity Hub, choose **Add → Add project from disk**, then select `D:\DistantStars`.
 2. Open with **Unity 6000.3.4f1** (the installed Unity 6.3 Editor used to generate this project). Allow the package import to finish.
 3. Open `Assets/_Game/Scenes/Bootstrap.unity`.
-4. Press Play and click the Game view. Walk with **WASD**, look with the **mouse**, and pause/resume with **Escape**. The orange benches and striped floor provide orientation. Exit Play to release the cursor.
+4. Press Play and click the Game view. Walk with **WASD**, look with the **mouse**, and pause/resume with **Escape**. Exit Play to release the cursor.
 5. Verify the enclosed room renders, walls stop movement, the camera remains inside the capsule, and the Console has no errors. Check both movement and mouse look manually; batch tests do not evaluate visual quality or comfort.
 
-Scenes, input references, player prefab and URP settings are already generated and serialized. Do **not** rerun the one-time `The Long Way Home → Create Foundation (once)` command; it refuses to overwrite existing scenes. Build Profiles should include Bootstrap, ShipInterior and SpaceExterior in that order, all enabled.
+Scenes, input references, player prefab and URP settings are already generated and serialized. Do **not** rerun the one-time `The Long Way Home → Create Foundation (once)` or `Upgrade to Gravity Prototype (once)` commands; the committed scenes already contain both. Build Profiles should include Bootstrap, ShipInterior and SpaceExterior in that order, all enabled.
 
-The Input System asset reserves left/right mouse grabs, Space jump/push and E interaction for future milestones; these actions have **no gameplay behavior yet**. Acceleration gravity, hands, robot, navigation, survival and science clocks are not implemented. M1 uses a basic grounded Rigidbody controller and Unity's default downward gravity.
+## Try the gravity prototype
+
+- **G**: toggle 1g acceleration / zero-g coasting. The `Ship acceleration` scene object's Inspector exposes the actual acceleration vector for intermediate and other directions.
+- **Hold left/right mouse** while aiming the crosshair at a tool or rail within 1.8 m: grab with the corresponding hand. Release the button to let go. Blue is left; amber is right.
+- **WASD**: walk while grounded. While holding a rail, pull in the camera's forward/right directions, including vertically when looking up/down. In free float, WASD adds no thrust.
+- **Space**: jump from the floor, or push away from a contacted static surface / held rail in zero-g. Pushing releases both hands. Space in open space does nothing.
+- The rail is to the left of the starting position. The wrench and sample canister sit on a shelf to the right. Aim at each in turn to hold two different objects.
+- **Escape** pauses physics and releases the cursor. Resuming reconciles any grab buttons released while paused. **E** remains reserved for future consoles.
+
+Manual acceptance loop: walk and grab the rail; press G; look slightly up and hold W to pull; press Space to release/push away; observe drift without input thrust. Return to 1g, pick up the wrench and canister, coast, release a moving tool and observe inertia, then restore 1g and check that the objects settle. Repeat near walls and while holding both hands. Record jitter, clipping, excessive reach or uncomfortable camera motion before M3.
+
+The prototype uses simple hand markers, rail reach constraints and spring-driven tool grabs. Tools rotate freely about the grasp. No full-body IK, production repair interaction, robot, navigation, survival or science clocks yet.
 
 ## Dependencies and project organization
 
 Unity's installed Universal 3D template generated this project. Direct packages include URP **17.3.0**, Input System **1.17.0**, Test Framework **1.6.0** and Unity UI **2.0.0**. The complete authoritative lists are `Packages/manifest.json` and `Packages/packages-lock.json`. Bundled template utilities are retained; none is a gameplay dependency unless referenced by our assembly definitions. Input System is the active backend. Text serialization and visible meta files are enabled.
 
 - `Assets/_Game/Scenes`: Bootstrap, ShipInterior, SpaceExterior.
-- `Assets/_Game/Scripts`: runtime bootstrap and temporary foundation player.
+- `Assets/_Game/Scripts`: bootstrap; player input/view, movement and hand components; ship gravity source and bodies.
 - `Assets/_Game/Input`, `Prefabs/Player`, `Art/Materials`: input map, player and graybox materials.
 - `Assets/_Game/Editor`: one-time scene/asset generation and Windows build entry point.
 - `Assets/_Game/Tests/PlayMode`: behavior tests.
@@ -47,6 +58,13 @@ Test runs intentionally omit `-quit`: the test runner exits when complete. Read 
 
 ## Verification record
 
+M2 verification on 2026-10-10:
+
+- **10/10 PlayMode tests passed** after the final physics-loop input changes. Coverage includes additive boot, walking/wall collision, pause, rotated/intermediate/reversed gravity and mass independence, free-flight inertia with WASD/Space input, repeated G transitions, two-hand object ownership/release, rail pulling and push-off, sleeping surface push-off, wall occlusion, and joint/collision cleanup on hand disable.
+- Results: `TestResults/gravity-playmode.xml` and `TestResults/gravity-playmode.log`. Grab tests wait for physics steps because grab requests are now consumed in FixedUpdate.
+- No missing asset metadata or duplicate GUIDs; Git diff whitespace checks passed.
+- **Windows x64 development build succeeded**, with `FOUNDATION_WINDOWS_BUILD_OK` and Unity exit code 0 in `TestResults/gravity-build.log`. Output: `Builds/Windows/TheLongWayHome.exe`. Human visual/feel playtesting remains outstanding; passing tests do not establish comfortable movement or production-ready joint stability.
+
 Verified on 2026-10-10 with Unity 6000.3.4f1:
 
 - Unity generated/imported the URP project and compiled the runtime, Editor and test assemblies successfully.
@@ -59,8 +77,8 @@ Verified on 2026-10-10 with Unity 6000.3.4f1:
 
 ## Git and next work
 
-The initially empty folder had no Unity project, Git history or remote. Local branch: `chore/unity-setup`. No GitHub repository destination has been selected; nothing has been published. Do not push main or merge without approval. Track `.meta` files, Packages and ProjectSettings; caches and builds are ignored. No large custom binary assets exist yet, so LFS filters are not required. Add LFS deliberately before introducing large art/audio files.
+Remote: [BenGigs/LongWayHome](https://github.com/BenGigs/LongWayHome). The foundation is published on `chore/unity-setup`; the prototype is developed on `feat/ship-gravity`. The initially empty remote uses the foundation branch as its first review base. No direct push to main or PR merge is authorized. Track `.meta` files, Packages and ProjectSettings; caches and builds are ignored. No large custom binary assets exist yet, so LFS filters are not required.
 
-Suggested commit: `chore: establish Unity 6 URP project foundation`.
+Foundation acceptance: [issue #1](https://github.com/BenGigs/LongWayHome/issues/1). Gravity prototype: [issue #2](https://github.com/BenGigs/LongWayHome/issues/2).
 
-Prepared issue descriptions and publication commands: [.github/ISSUE_BACKLOG.md](.github/ISSUE_BACKLOG.md). Next task: Milestone 2 acceleration-based gravity and two-hand movement prototype, following ROADMAP.md.
+Next task: validate and tune the M2 movement loop with human playtesting before moving to ship blockout. See ROADMAP.md.
