@@ -21,6 +21,17 @@ namespace LongWayHome.Player
         private Collider[] playerColliders;
         private bool grabRequested;
         private bool releaseRequested;
+        private Transform handVisual;
+        private Renderer originalHandRenderer;
+        private Vector3 reachStartLocal;
+        private Vector3 pickupLocal;
+        private float pickupTime;
+        private LedgeClimber climber;
+        private int originalSolverIterations;
+        private int originalVelocityIterations;
+        private float carryRadius;
+        private const float ReachDuration = .18f;
+        private const float RetrieveDuration = .28f;
 
         public bool IsHolding => held != null;
         public Grabbable HeldObject => held;
@@ -51,6 +62,21 @@ namespace LongWayHome.Player
                 return;
             }
             playerColliders = playerBody.GetComponentsInChildren<Collider>();
+            climber = playerBody.GetComponent<LedgeClimber>();
+            // Keep the visible hand separate from its physics target, so reaching can
+            // be animated without snapping the hand renderer to the pickup point.
+            originalHandRenderer = handTarget.GetComponent<Renderer>();
+            var mesh = handTarget.GetComponent<MeshFilter>();
+            if (originalHandRenderer != null && mesh != null)
+            {
+                var visual = new GameObject(name + " visible grip", typeof(MeshFilter), typeof(MeshRenderer));
+                visual.GetComponent<MeshFilter>().sharedMesh = mesh.sharedMesh;
+                visual.GetComponent<MeshRenderer>().sharedMaterials = originalHandRenderer.sharedMaterials;
+                handVisual = visual.transform;
+                handVisual.localScale = handTarget.transform.lossyScale;
+                handVisual.position = handTarget.position;
+                originalHandRenderer.enabled = false;
+            }
         }
 
         public bool TryGrab()
@@ -66,6 +92,9 @@ namespace LongWayHome.Player
             if (candidate == null || !candidate.TryClaim(this)) return false;
 
             held = candidate;
+            pickupTime = Time.time;
+            reachStartLocal = playerBody.transform.InverseTransformPoint(handVisual != null ? handVisual.position : handTarget.position);
+            pickupLocal = Quaternion.Inverse(playerBody.rotation) * (hit.point - playerBody.position);
             // Raycasts use the physics pose. An interpolated Transform can lag behind
             // it, producing the wrong grip point on a moving (or repositioned) tool.
             localAnchor = HeldPhysicsMatrix().inverse.MultiplyPoint3x4(hit.point);
@@ -93,13 +122,20 @@ namespace LongWayHome.Player
                 joint.autoConfigureConnectedAnchor = false;
                 joint.anchor = localAnchor;
                 joint.connectedAnchor = Vector3.zero;
-                joint.xMotion = joint.yMotion = joint.zMotion = ConfigurableJointMotion.Free;
-                var drive = new JointDrive { positionSpring = 1200f, positionDamper = 80f, maximumForce = 350f };
-                joint.xDrive = joint.yDrive = joint.zDrive = drive;
+                // A carried object has a firm grip, not a spring that oscillates and
+                // stretches when the player accelerates. World collisions remain active.
+                joint.xMotion = joint.yMotion = joint.zMotion = ConfigurableJointMotion.Locked;
+                originalSolverIterations = held.Body.solverIterations;
+                originalVelocityIterations = held.Body.solverVelocityIterations;
+                held.Body.solverIterations = 16;
+                held.Body.solverVelocityIterations = 8;
                 // A grip holds orientation relative to the hand, rather than behaving
                 // like a ball-and-socket. Capture the pickup pose, then turn with the hand.
                 joint.angularXMotion = joint.angularYMotion = joint.angularZMotion = ConfigurableJointMotion.Locked;
                 heldColliders = held.GetComponentsInChildren<Collider>();
+                carryRadius = .1f;
+                foreach (var item in heldColliders)
+                    carryRadius = Mathf.Max(carryRadius, item.bounds.extents.magnitude + Vector3.Distance(item.bounds.center, hit.point));
                 SetPlayerCollisionIgnored(true);
             }
             joint.enableCollision = false;
@@ -143,12 +179,47 @@ namespace LongWayHome.Player
             else if (grabRequested) TryGrab();
             grabRequested = releaseRequested = false;
             if (held != null && (!held.isActiveAndEnabled || joint == null ||
-                Vector3.Distance(playerBody.position, HeldPhysicsMatrix().MultiplyPoint3x4(localAnchor)) > reach + 0.8f))
+                (IsAnchored && Vector3.Distance(playerBody.position, GripPoint) > reach + 0.8f)))
                 Release();
             if (held == null && joint != null) Release();
-            Vector3 target = IsAnchored ? held.transform.TransformPoint(localAnchor) : view.TransformPoint(restOffset);
+            // Interpolated camera transforms describe the previous rendered pose.
+            // Convert them back to the current Rigidbody pose before driving physics.
+            Quaternion rotation = playerBody.rotation * Quaternion.Inverse(playerBody.transform.rotation) * view.rotation;
+            Vector3 eye = playerBody.position + playerBody.rotation * playerBody.transform.InverseTransformPoint(view.position);
+            Vector3 target = IsAnchored ? GripPoint : eye + rotation * restOffset;
+            if (held != null && !IsAnchored)
+            {
+                Vector3 chest = playerBody.position + playerBody.rotation * Vector3.up * .25f;
+                if (climber != null && climber.IsActive)
+                    target = chest + playerBody.rotation * new Vector3(Mathf.Sign(restOffset.x) * .14f, 0, .12f);
+                float t = Mathf.SmoothStep(0, 1, (Time.time - pickupTime - ReachDuration) / RetrieveDuration);
+                target = Vector3.Lerp(playerBody.position + playerBody.rotation * pickupLocal, target, t);
+                // Retract the grip toward the body before the object hits a wall/rim.
+                // Conservative bounds include the offset from the contact point to its centre.
+                Vector3 path = target - chest;
+                float distance = path.magnitude;
+                if (distance > .001f && t > 0)
+                    foreach (var hit in UnityEngine.Physics.SphereCastAll(chest, carryRadius, path / distance, distance, grabLayers, QueryTriggerInteraction.Ignore))
+                    {
+                        if (hit.collider.GetComponentInParent<Grabbable>() == held || hit.collider.attachedRigidbody == playerBody) continue;
+                        target = chest + path.normalized * Mathf.Min(Vector3.Distance(chest, target), Mathf.Max(0, hit.distance - .04f));
+                    }
+            }
             handTarget.MovePosition(target);
-            handTarget.MoveRotation(view.rotation);
+            handTarget.MoveRotation(rotation);
+        }
+
+        private void LateUpdate()
+        {
+            if (handVisual == null) return;
+            Vector3 target = held != null ? held.transform.TransformPoint(localAnchor) : view.TransformPoint(restOffset);
+            if (held != null)
+            {
+                float t = Mathf.SmoothStep(0, 1, (Time.time - pickupTime) / ReachDuration);
+                target = Vector3.Lerp(playerBody.transform.TransformPoint(reachStartLocal), target, t);
+            }
+            handVisual.position = target;
+            handVisual.rotation = view.rotation;
         }
 
         public void Release()
@@ -163,6 +234,11 @@ namespace LongWayHome.Player
                 Destroy(joint);
             }
             SetPlayerCollisionIgnored(false);
+            if (held != null && !held.IsHandrail && held.Body != null)
+            {
+                held.Body.solverIterations = originalSolverIterations;
+                held.Body.solverVelocityIterations = originalVelocityIterations;
+            }
             if (held != null) held.Release(this);
             held = null;
             joint = null;
@@ -184,6 +260,16 @@ namespace LongWayHome.Player
                     if (item != null && player != null) UnityEngine.Physics.IgnoreCollision(item, player, ignored);
         }
 
-        private void OnDisable() => Release();
+        private void OnEnable() { if (handVisual != null) handVisual.gameObject.SetActive(true); }
+        private void OnDisable()
+        {
+            Release();
+            if (handVisual != null) handVisual.gameObject.SetActive(false);
+        }
+        private void OnDestroy()
+        {
+            if (handVisual != null) Destroy(handVisual.gameObject);
+            if (originalHandRenderer != null) originalHandRenderer.enabled = true;
+        }
     }
 }

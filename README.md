@@ -14,13 +14,17 @@ Scenes, input references, player prefab and URP settings are already generated a
 
 ## Five-deck gameplay playtest
 
+Carry refinement: tools use a firm grip with a visible 0.18 s reach and 0.28 s retrieval. They tuck closer during climbs and retract near obstructions, retaining world collision. Carried objects no longer detach from the rail distance rule. **29/29 PlayMode tests passed** (`TestResults/carry-final.xml`), including grip-error bounds while walking and looking around during two one-handed climbs, visible reach timing, release/inertia, and battery installation/removal. Human review of pickup and carrying feel remains pending.
+
+The grip-refinement Windows build succeeded with Editor exit code 0 (`TestResults/carry-build.log`) and was launched from `Builds/WindowsGrip/TheLongWayHome.exe`.
+
 Battery delivery playtest: pick up the orange pack with a blue stripe from its pedestal in fuel/storage. Carry it up two decks to the workshop using your free hand on the rings. Bring it close to the blue socket between orange guides on the workbench, aim at the socket, and press **E** to latch it. The green lamp and spinning fan indicate power. Aim at the installed battery and press E again to release it; catch it with a mouse button. G lets you repeat in coasting, and R restores the initial battery position. No HUD prompts are shown. This is a reusable interaction test, not a battery-charge or ship-power simulation.
 
 Battery verification: **28/28 PlayMode tests passed** (`TestResults/battery-playmode.xml`), including two actual one-handed ascents while retaining the pack, E installation/removal, lamp/fan feedback, latch stability across gravity changes, ejection/drift, reset, distance/obstruction rejection, and the prior movement regressions. Supply and workshop renders were inspected. Human review of the delivery loop remains pending.
 
 The battery Windows development build succeeded with Editor exit code 0 (`TestResults/battery-build.log`) and was launched from `Builds/WindowsBattery/TheLongWayHome.exe`. Do not rerun `BatteryDeliverySetup.Create`; the fixtures and references are committed in FiveDeckGameplay.
 
-Latest tuning build: `Builds/WindowsBattery/TheLongWayHome.exe` (separate from the prior playtest). Rebuild with the batch Editor entry point `LongWayHome.Editor.FoundationSetup.BuildBatteryPlaytest`.
+Latest tuning build: `Builds/WindowsGrip/TheLongWayHome.exe` (separate from the prior playtest). Rebuild with the batch Editor entry point `LongWayHome.Editor.FoundationSetup.BuildGripPlaytest`.
 
 Flush-rim verification: the full run passed the previous 24 tests; the new crossing check needed a longer traversal interval (`TestResults/flush-playmode.xml`). With the corrected interval and final mesh shading, all 10 ledge tests passed (`TestResults/flush-final.xml`), including same-height ring/deck ray checks and a capsule crossing the rim into a fall. The rendered seam was inspected. Unity generated the replacement continuous rim meshes and scene changes, preserving the deck GUID; metadata/whitespace audits passed.
 
@@ -53,7 +57,7 @@ Pull-ups keep the Rigidbody dynamic and collidable. The orange rims share the fl
 
 Manual acceptance loop: walk and grab the rail; press G; look slightly up and hold W to pull; press Space to push while keeping your grip; release the mouse buttons to let go and observe drift without input thrust. Return to 1g, pick up the wrench and canister, coast, release a moving tool and observe inertia, then restore 1g and check that the objects settle. Repeat near walls and while holding both hands. Record jitter, clipping, excessive reach or uncomfortable camera motion during the layout playtest.
 
-The prototype uses simple hand markers, rail reach constraints and spring-driven tool grabs. Tools preserve their pickup orientation relative to the hand, follow camera turns, and regain free rotation on release. No full-body IK, production repair interaction, robot, navigation, survival or science clocks yet.
+The prototype uses simple hand markers, rail reach constraints and firm tool grips with a visible reach/retrieve motion. Tools preserve their pickup orientation relative to the hand, follow camera turns, and regain free rotation on release. No full-body IK, production repair interaction, robot, navigation, survival or science clocks yet.
 
 ## Dependencies and project organization
 

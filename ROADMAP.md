@@ -52,3 +52,5 @@ User accepted the smoother climbing and catch tolerance. Follow-up adds A/D body
 Traversal follow-up replaces the recessed segmented ring with a continuous flush rim. Ring and deck share their top plane, thickness and boundary so the player can cross the orange edge without encountering a step. The original opening diameter and grab behavior are retained.
 
 User accepted traversal and the flush rims. The next approved M3 interaction test is battery delivery: carry a pack from fuel/storage through two hatches with one free hand, latch it into the workshop to power a lamp/fan, remove it, and repeat while coasting. No navigation, robot deployment or resource simulation is included. Work is on feat/battery-delivery, stacked on feat/ledge-traversal.
+
+Battery carry feedback: climbing works, but spring lag, visible jitter and rim snags caused unwanted drops. The follow-up replaces the loose spring grip with a firm joint, drives it from physics-space poses, tucks the pack during climbs, retracts near obstacles, and animates visible reaching/retrieval. Intentional release remains immediate; no HUD is added.

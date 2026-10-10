@@ -49,13 +49,51 @@ namespace LongWayHome.Tests
                 }
                 Assert.That(hands[1].HeldLedge, Is.Not.Null);
                 motor.SetMovement(Vector2.up);
-                yield return new WaitForSeconds(4);
+                Quaternion climbingView = view.rotation;
+                for (int step = 0; step < 200; step++)
+                {
+                    view.rotation = climbingView * Quaternion.Euler(0, Mathf.Sin(step * .1f) * 30, 0);
+                    yield return new WaitForFixedUpdate();
+                    Assert.That(hands[0].HeldObject, Is.EqualTo(Socket.Battery), "Looking around mid-climb must not break the grip.");
+                    if (step > 30)
+                    {
+                        var grip = Socket.Battery.GetComponent<ConfigurableJoint>();
+                        Assert.That(Vector3.Distance(hands[0].GripPoint, grip.connectedBody.position), Is.LessThan(.15f), "The pack must remain at the physics hand through the rim.");
+                    }
+                }
                 motor.SetMovement(Vector2.zero);
                 Assert.That(body.position.y, Is.InRange(deck * 3.2f + .95f, deck * 3.2f + 1.2f));
                 Assert.That(hands[0].HeldObject, Is.EqualTo(Socket.Battery), "The carrying hand must keep its battery through the hatch.");
                 hands[1].Release();
                 yield return new WaitForSeconds(.15f);
             }
+        }
+
+        [UnityTest]
+        public IEnumerator PickupReachesVisiblyAndWalkingKeepsGripStable()
+        {
+            Player.enabled = false;
+            var view = Player.GetComponentInChildren<Camera>().transform;
+            var hand = Player.GetComponentsInChildren<HandInteractor>()[0];
+            yield return GrabAt(view.position + Vector3.forward * 1.2f);
+            var visual = GameObject.Find(hand.name + " visible grip").transform;
+            yield return new WaitForSeconds(.06f);
+            Assert.That(Vector3.Distance(visual.position, hand.GripPoint), Is.GreaterThan(.15f), "The visible hand should still be reaching, not snapped onto the object.");
+            yield return new WaitForSeconds(.6f);
+            var motor = Player.GetComponent<PlayerMovement>();
+            motor.SetMovement(Vector2.right);
+            for (int i = 0; i < 25; i++)
+            {
+                yield return new WaitForFixedUpdate();
+                var grip = Socket.Battery.GetComponent<ConfigurableJoint>();
+                Assert.That(Vector3.Distance(hand.GripPoint, grip.connectedBody.position), Is.LessThan(.06f), "Walking must not make the object oscillate away from the hand.");
+            }
+            motor.SetMovement(Vector2.zero);
+            Assert.That(Socket.Battery.Body.isKinematic, Is.False);
+            Assert.That(Socket.Battery.GetComponent<Collider>().enabled, Is.True);
+            hand.Release();
+            yield return null;
+            Assert.That(Socket.Battery.GetComponent<ConfigurableJoint>(), Is.Null);
         }
 
         [UnityTest]
