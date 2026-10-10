@@ -2,6 +2,8 @@
 
 These are intended models, not a claim that all systems are implemented.
 
+The workshop battery is a 1 kg rigid object. Its socket is an idealized mechanical latch: installation aligns and secures it, dissipating residual motion; removal gives a 0.35 m/s outward impulse. The fixed ship absorbs the omitted reaction. The lamp and fan indicate installed/not-installed only; no charge, electricity, airflow, heat or battery chemistry is simulated.
+
 Directional climbing shifts the body within a 0.35 m offset from the catch path and permits lowering 0.4 m below the normal hanging target. These are comfort/reach limits, not a simulated arm skeleton. Hand anchors remain fixed and releasing the grip removes support.
 
 Ring aim tolerance (28 cm around the camera ray) approximates the player reaching for a nearby visible grip, with unchanged 1.8 m reach. It only applies when grabbing is requested and does not brake free falls. Active pull-up response is eased over 0.16 s for comfort; collision and the contact-force limit remain in effect.

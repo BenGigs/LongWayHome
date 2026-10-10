@@ -12,6 +12,8 @@ Ring aiming first uses the exact ray; if no grabbable is hit, a reusable sphere-
 
 Powered ledge movement also accepts A/D as a view-yaw-relative body offset capped at 0.35 m, without moving hand anchors. S reverses a partial mantle into the shaft before lowering toward a point 0.4 m below the normal hang. Releasing movement pauses the partial move, and W resumes ascent. All targets continue to use dynamic collision and the existing contact-force bounds.
 
+BatterySocket is a local workshop interaction with explicit references to the player, hands, battery, mount, fan and lamp. E operates the socket only when the unpaused player aims within 1.8 m; the carried pack is excluded from aim occlusion, but other objects are not. Installation additionally requires the matching battery in a hand within 0.8 m of the latch and an unobstructed approach ray. It releases the hand, secures the battery as a kinematic body, suspends its gravity component and powers the feedback objects. E unlatches it with a small outward impulse, restoring dynamic motion and gravity. Loose objects retain the existing hand spring/ownership model. Scene reset clears the local state. BatteryDeliverySetup adds these fixtures once using Editor APIs; do not regenerate over manual edits.
+
 ## Foundation
 
 `Bootstrap` stays loaded and owns `SceneBootstrap`, which validates build scene availability, loads `ShipInterior` and `SpaceExterior` additively, then makes the interior active. No global singleton or DontDestroyOnLoad manager is needed. Start a normal session through Bootstrap. ShipInterior also works alone for quick movement inspection.

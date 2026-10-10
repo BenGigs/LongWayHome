@@ -50,3 +50,5 @@ Human feedback approved the initial traversal. Current M3 tuning eases active pu
 User accepted the smoother climbing and catch tolerance. Follow-up adds A/D body shifts and S lowering while gripping, and removes the on-screen HUD/instructions/crosshair. This remains M3 traversal tuning.
 
 Traversal follow-up replaces the recessed segmented ring with a continuous flush rim. Ring and deck share their top plane, thickness and boundary so the player can cross the orange edge without encountering a step. The original opening diameter and grab behavior are retained.
+
+User accepted traversal and the flush rims. The next approved M3 interaction test is battery delivery: carry a pack from fuel/storage through two hatches with one free hand, latch it into the workshop to power a lamp/fan, remove it, and repeat while coasting. No navigation, robot deployment or resource simulation is included. Work is on feat/battery-delivery, stacked on feat/ledge-traversal.

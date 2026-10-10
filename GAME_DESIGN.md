@@ -2,6 +2,8 @@
 
 Working title. A single-player, first-person scientific exploration and light survival game for Windows, built with Unity 6 and URP. Quiet, lonely, beautiful, occasionally intimidating; the compact spacecraft gradually becomes home. No combat, enemy factions, endless crafting, or arbitrary failure spam.
 
+Current approved interaction slice: carry a battery from bottom-deck fuel/storage to the workshop, climb with the free hand, then operate a physical socket to power a visible lamp/fan. Repeat in zero gravity and confirm loose versus secured objects behave differently. Keep the graybox and no-HUD presentation while evaluating this loop.
+
 ## Mission and constraints
 
 Humanity remains on Earth, which has roughly 50,000 years of habitability left. One astronaut searches for a naturally human-compatible world aboard an experimental spacecraft capped at 99.999% of light speed. The astronaut never leaves the ship. Evidence, light-speed communication delays, Earth time, ship time, and the arrival of a colonization fleet determine success. Discovering native life or being inside a habitable zone is not sufficient.

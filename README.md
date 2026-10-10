@@ -14,7 +14,13 @@ Scenes, input references, player prefab and URP settings are already generated a
 
 ## Five-deck gameplay playtest
 
-Latest tuning build: `Builds/WindowsFlush/TheLongWayHome.exe` (separate from the prior playtest). Rebuild with the batch Editor entry point `LongWayHome.Editor.FoundationSetup.BuildFlushPlaytest`.
+Battery delivery playtest: pick up the orange pack with a blue stripe from its pedestal in fuel/storage. Carry it up two decks to the workshop using your free hand on the rings. Bring it close to the blue socket between orange guides on the workbench, aim at the socket, and press **E** to latch it. The green lamp and spinning fan indicate power. Aim at the installed battery and press E again to release it; catch it with a mouse button. G lets you repeat in coasting, and R restores the initial battery position. No HUD prompts are shown. This is a reusable interaction test, not a battery-charge or ship-power simulation.
+
+Battery verification: **28/28 PlayMode tests passed** (`TestResults/battery-playmode.xml`), including two actual one-handed ascents while retaining the pack, E installation/removal, lamp/fan feedback, latch stability across gravity changes, ejection/drift, reset, distance/obstruction rejection, and the prior movement regressions. Supply and workshop renders were inspected. Human review of the delivery loop remains pending.
+
+The battery Windows development build succeeded with Editor exit code 0 (`TestResults/battery-build.log`) and was launched from `Builds/WindowsBattery/TheLongWayHome.exe`. Do not rerun `BatteryDeliverySetup.Create`; the fixtures and references are committed in FiveDeckGameplay.
+
+Latest tuning build: `Builds/WindowsBattery/TheLongWayHome.exe` (separate from the prior playtest). Rebuild with the batch Editor entry point `LongWayHome.Editor.FoundationSetup.BuildBatteryPlaytest`.
 
 Flush-rim verification: the full run passed the previous 24 tests; the new crossing check needed a longer traversal interval (`TestResults/flush-playmode.xml`). With the corrected interval and final mesh shading, all 10 ledge tests passed (`TestResults/flush-final.xml`), including same-height ring/deck ray checks and a capsule crossing the rim into a fall. The rendered seam was inspected. Unity generated the replacement continuous rim meshes and scene changes, preserving the deck GUID; metadata/whitespace audits passed.
 
@@ -43,7 +49,7 @@ Pull-ups keep the Rigidbody dynamic and collidable. The orange rims share the fl
 - **WASD**: walk while grounded. While holding a rail, pull in the camera's forward/right directions, including vertically when looking up/down. In free float, WASD adds no thrust.
 - **Space**: jump from the floor, or push away from a contacted static surface / held rail in zero-g. Jumping and pushing keep both grips; release each mouse button to let go. Floor jumps use a separate 4 m/s impulse (about 0.8 m rise at 1g when unobstructed). Space in open space does nothing.
 - The rail is to the left of the starting position. The wrench and sample canister sit on the right-hand shelf in the workshop, through the first hatch. Aim at each in turn to hold two different objects.
-- **Escape** pauses physics and releases the cursor. Resuming reconciles any grab buttons released while paused. **E** remains reserved for future consoles.
+- **Escape** pauses physics and releases the cursor. Resuming reconciles any grab buttons released while paused. **E** operates the workshop battery latch in FiveDeckGameplay.
 
 Manual acceptance loop: walk and grab the rail; press G; look slightly up and hold W to pull; press Space to push while keeping your grip; release the mouse buttons to let go and observe drift without input thrust. Return to 1g, pick up the wrench and canister, coast, release a moving tool and observe inertia, then restore 1g and check that the objects settle. Repeat near walls and while holding both hands. Record jitter, clipping, excessive reach or uncomfortable camera motion during the layout playtest.
 

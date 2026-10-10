@@ -23,6 +23,7 @@ namespace LongWayHome.Player
         private bool releaseRequested;
 
         public bool IsHolding => held != null;
+        public Grabbable HeldObject => held;
         public bool IsAnchored => held != null && held.IsHandrail;
         public Vector3 PushNormal => railNormal;
         public string HeldName => held == null ? "empty" : held.name;
