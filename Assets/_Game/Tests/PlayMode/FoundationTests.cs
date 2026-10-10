@@ -9,9 +9,10 @@ using UnityEngine.TestTools;
 
 namespace LongWayHome.Tests
 {
-    public sealed class FoundationTests
+    public abstract class PrototypeTestContext
     {
-        private Keyboard keyboard;
+        protected Keyboard keyboard;
+        protected Mouse mouse;
         private InputSettings.BackgroundBehavior previousBackgroundBehavior;
 #if UNITY_EDITOR
         private InputSettings.EditorInputBehaviorInPlayMode previousEditorBehavior;
@@ -29,6 +30,7 @@ namespace LongWayHome.Tests
                 InputSettings.EditorInputBehaviorInPlayMode.AllDeviceInputAlwaysGoesToGameView;
 #endif
             keyboard = InputSystem.AddDevice<Keyboard>();
+            mouse = InputSystem.AddDevice<Mouse>();
             yield return SceneManager.LoadSceneAsync("Bootstrap", LoadSceneMode.Single);
             float timeout = Time.realtimeSinceStartup + 20;
             while (!SceneManager.GetSceneByName("SpaceExterior").isLoaded && Time.realtimeSinceStartup < timeout)
@@ -41,6 +43,7 @@ namespace LongWayHome.Tests
         public IEnumerator TearDown()
         {
             InputSystem.RemoveDevice(keyboard);
+            InputSystem.RemoveDevice(mouse);
             InputSystem.settings.backgroundBehavior = previousBackgroundBehavior;
 #if UNITY_EDITOR
             InputSystem.settings.editorInputBehaviorInPlayMode = previousEditorBehavior;
@@ -48,7 +51,10 @@ namespace LongWayHome.Tests
             Time.timeScale = 1;
             yield return null;
         }
+    }
 
+    public sealed class FoundationTests : PrototypeTestContext
+    {
         [UnityTest]
         public IEnumerator BootstrapComposesOnePlayerAndCamera()
         {

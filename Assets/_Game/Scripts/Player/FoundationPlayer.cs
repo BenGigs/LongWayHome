@@ -1,25 +1,29 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
+using LongWayHome.ShipPhysics;
 
 namespace LongWayHome.Player
 {
-    /// <summary>Grounded M1 controller. M2 will replace movement with ship-relative physics.</summary>
+    /// <summary>Input, view, pause and prototype HUD; locomotion and grabbing have separate components.</summary>
     [RequireComponent(typeof(Rigidbody), typeof(CapsuleCollider))]
     public sealed class FoundationPlayer : MonoBehaviour
     {
         [SerializeField] private InputActionAsset inputActions;
         [SerializeField] private Transform view;
-        [SerializeField, Min(0f)] private float walkSpeed = 3f;
         [SerializeField, Min(0f)] private float lookSensitivity = 0.12f;
-        [SerializeField] private LayerMask groundLayers = 1;
+        [SerializeField] private PlayerMovement motor;
+        [SerializeField] private HandInteractor leftHand;
+        [SerializeField] private HandInteractor rightHand;
+        [SerializeField] private ShipGravityController gravitySource;
 
-        private Rigidbody body;
         private InputActionAsset runtimeActions;
         private InputAction move;
         private InputAction look;
         private InputAction pause;
-        private Vector2 movement;
-        private float yaw;
+        private InputAction leftGrab;
+        private InputAction rightGrab;
+        private InputAction jumpPush;
+        private InputAction toggleGravity;
         private float pitch;
         private bool paused;
 
@@ -27,10 +31,9 @@ namespace LongWayHome.Player
 
         private void Awake()
         {
-            body = GetComponent<Rigidbody>();
-            if (inputActions == null || view == null)
+            if (inputActions == null || view == null || motor == null || leftHand == null || rightHand == null || gravitySource == null)
             {
-                Debug.LogError("FoundationPlayer requires input actions and a view transform.", this);
+                Debug.LogError("Player requires input, view, motor, hands and gravity references. Run the M2 upgrade once.", this);
                 enabled = false;
                 return;
             }
@@ -39,7 +42,10 @@ namespace LongWayHome.Player
             move = runtimeActions.FindAction("Gameplay/Move", true);
             look = runtimeActions.FindAction("Gameplay/Look", true);
             pause = runtimeActions.FindAction("Gameplay/Pause", true);
-            yaw = body.rotation.eulerAngles.y;
+            leftGrab = runtimeActions.FindAction("Gameplay/LeftGrab", true);
+            rightGrab = runtimeActions.FindAction("Gameplay/RightGrab", true);
+            jumpPush = runtimeActions.FindAction("Gameplay/JumpPush", true);
+            toggleGravity = runtimeActions.FindAction("Gameplay/ToggleGravity", true);
         }
 
         private void OnEnable()
@@ -52,27 +58,22 @@ namespace LongWayHome.Player
         private void Update()
         {
             if (pause.WasPressedThisFrame()) SetPaused(!paused);
-            movement = paused ? Vector2.zero : move.ReadValue<Vector2>();
+            motor.SetMovement(paused ? Vector2.zero : move.ReadValue<Vector2>());
             if (paused) return;
+
+            if (toggleGravity.WasPressedThisFrame())
+                gravitySource.AccelerationLocal = gravitySource.AccelerationLocal.sqrMagnitude > 0.01f ? Vector3.zero : Vector3.up * 9.81f;
+            if (leftGrab.WasPressedThisFrame()) leftHand.RequestGrab();
+            if (!leftGrab.IsPressed()) leftHand.RequestRelease();
+            if (rightGrab.WasPressedThisFrame()) rightHand.RequestGrab();
+            if (!rightGrab.IsPressed()) rightHand.RequestRelease();
+            if (jumpPush.WasPressedThisFrame()) motor.RequestPush();
 
             // Mouse delta is already a per-frame displacement; do not multiply by deltaTime.
             Vector2 delta = look.ReadValue<Vector2>() * lookSensitivity;
-            yaw += delta.x;
+            motor.AddYaw(delta.x);
             pitch = Mathf.Clamp(pitch - delta.y, -85f, 85f);
-            view.rotation = Quaternion.Euler(pitch, yaw, 0f);
-        }
-
-        private void FixedUpdate()
-        {
-            if (paused) return;
-            body.MoveRotation(Quaternion.Euler(0f, yaw, 0f));
-            // The player is on layer 2, excluded from groundLayers. No air steering.
-            if (!Physics.SphereCast(body.position, 0.28f, Vector3.down, out _,
-                    0.8f, groundLayers, QueryTriggerInteraction.Ignore)) return;
-
-            Vector3 target = Quaternion.Euler(0f, yaw, 0f) *
-                new Vector3(movement.x, 0f, movement.y) * walkSpeed;
-            body.linearVelocity = new Vector3(target.x, body.linearVelocity.y, target.z);
+            view.localRotation = Quaternion.Euler(pitch, 0f, 0f);
         }
 
         private void SetPaused(bool value)
@@ -91,6 +92,9 @@ namespace LongWayHome.Player
         private void OnDisable()
         {
             runtimeActions?.Disable();
+            if (motor != null) motor.SetMovement(Vector2.zero);
+            leftHand?.Release();
+            rightHand?.Release();
             Time.timeScale = 1f;
             Cursor.lockState = CursorLockMode.None;
             Cursor.visible = true;
@@ -103,11 +107,15 @@ namespace LongWayHome.Player
 
         private void OnGUI()
         {
-            GUI.Box(new Rect(16, 16, 440, paused ? 100 : 80),
-                "THE LONG WAY HOME — FOUNDATION\n" +
-                "WASD: walk   |   Mouse: look   |   Esc: pause / resume\n" +
-                "Grounded test only. Hands and ship gravity arrive in Milestone 2." +
+            GUI.Box(new Rect(16, 16, 560, paused ? 160 : 140),
+                "THE LONG WAY HOME — GRAVITY PROTOTYPE\n" +
+                "WASD: walk / pull while holding rail   |   Mouse: look\n" +
+                "Hold LMB / RMB: grab with left / right hand   |   Release: let go\n" +
+                "Space: jump / push from contact   |   G: 1g / coast   |   Esc: pause\n" +
+                $"Gravity: {gravitySource.EffectiveGravity.magnitude:F2} m/s²   |   No contact = no WASD thrust\n" +
+                $"Left: {leftHand.HeldName}   |   Right: {rightHand.HeldName}" +
                 (paused ? "\nPAUSED — press Escape to resume" : ""));
+            GUI.Label(new Rect(Screen.width / 2f - 5, Screen.height / 2f - 10, 20, 20), "+");
         }
     }
 }

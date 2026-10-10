@@ -1,29 +1,8 @@
-# Prepared issues
+# GitHub work tracking
 
-No remote has been chosen. These descriptions are ready to copy into GitHub; no issues or PRs have been created.
+Repository: https://github.com/BenGigs/LongWayHome
 
-## M1 — Establish Unity project foundation
+- [M1: Review and accept the Unity project foundation — #1](https://github.com/BenGigs/LongWayHome/issues/1). Foundation is published on `chore/unity-setup`; automated checks passed. Human review remains open.
+- [M2: Prototype ship gravity and two-handed locomotion — #2](https://github.com/BenGigs/LongWayHome/issues/2). Implementation branch: `feat/ship-gravity`. Review this against `chore/unity-setup`, the initially empty repository's first published branch. Manual movement/visual acceptance remains part of the issue.
 
-Create Unity 6 URP project, input actions, additive Bootstrap/ShipInterior/SpaceExterior scenes, enclosed graybox and basic controllable Rigidbody player. Add Unity-compatible tracking and persistent design/architecture/science documentation. Verify compilation, scene composition, movement/collision and pause. Human acceptance: open Bootstrap, walk/look, confirm room visuals and no Console errors. Record automated verification and remaining manual checks in README.
-
-Branch: `chore/unity-setup`. Suggested commit: `chore: establish Unity 6 URP project foundation`.
-
-## M2 — Prove ship gravity and two-handed locomotion
-
-Implement configurable acceleration vector, per-body apparent gravity, grounded and contact-driven weightless movement, two simple hands, a handrail and grabbable wrench. Use the existing enclosed room. Add test-only 1g/coasting toggle. No free-flight WASD propulsion. Test arbitrary/intermediate acceleration, inertia, constraint cleanup and transitions. Acceptance: walk, coast, pull along rail, manipulate wrench, push off contact, return to grounded movement without instability. See ROADMAP for implementation order.
-
-Suggested branch: `feat/ship-gravity` for the first bounded portion, followed by movement and hand-interaction branches as needed.
-
-## Publish after choosing the repository
-
-Replace OWNER/REPOSITORY with the intended destination, and ensure its existing history is reconciled before pushing. Do not create or overwrite a remote main branch automatically. Save each issue body and the PR description to a UTF-8 file, then use:
-
-```powershell
-git remote add origin https://github.com/OWNER/REPOSITORY.git
-git fetch origin
-gh issue create --repo OWNER/REPOSITORY --title 'M1: Establish Unity project foundation' --body-file PATH_TO_ISSUE_BODY
-git push -u origin chore/unity-setup
-gh pr create --repo OWNER/REPOSITORY --base main --head chore/unity-setup --title 'Establish Unity 6 URP project foundation' --body-file PATH_TO_PR_BODY
-```
-
-A pull request needs an existing base branch with compatible history; an empty remote requires a deliberate initial-base setup first. Do not push directly to main or merge without the user's permission. Link the issue number and actual verification results in the PR description.
+Do not push directly to main or merge without explicit approval. No main branch was initialized by the agent. Once the user chooses the main branch policy, update the default/review branch conventions together. Use body files for multiline gh issue/PR descriptions. Do not duplicate these issues.
