@@ -97,6 +97,29 @@ namespace LongWayHome.Tests
         }
 
         [UnityTest]
+        public IEnumerator RenderedGripStaysStillRelativeToCameraWhileWalking()
+        {
+            Player.enabled = false;
+            var view = Player.GetComponentInChildren<Camera>().transform;
+            var hand = Player.GetComponentsInChildren<HandInteractor>()[0];
+            yield return GrabAt(view.position + Vector3.forward * 1.2f);
+            yield return new WaitForSeconds(.7f);
+            var probe = Player.gameObject.AddComponent<GripRenderProbe>();
+            probe.View = view;
+            probe.Hand = hand;
+            Player.GetComponent<PlayerMovement>().SetMovement(Vector2.right);
+            yield return new WaitForSeconds(.5f);
+            Assert.That(probe.Samples, Is.GreaterThan(5));
+            Assert.That(probe.MaxError, Is.LessThan(.002f), "The rendered grip must remain within 2 mm of the camera-relative hold pose, independent of physics/render timing.");
+            Player.GetComponent<PlayerMovement>().SetMovement(Vector2.zero);
+            hand.Release();
+            yield return null;
+            Assert.That(GameObject.Find("Workshop battery held presentation"), Is.Null);
+            foreach (var renderer in Socket.Battery.GetComponentsInChildren<MeshRenderer>())
+                Assert.That(renderer.enabled, Is.True, "Release restores the physical object's rendering.");
+        }
+
+        [UnityTest]
         public IEnumerator InputInstallsSecuresRemovesAndResetRestoresBattery()
         {
             Player.enabled = false;
@@ -166,6 +189,21 @@ namespace LongWayHome.Tests
             Object.Destroy(wall);
             hand.Release();
             Assert.That(Socket.TryInstall(hand), Is.False, "A free hand cannot install anything.");
+        }
+    }
+
+    [DefaultExecutionOrder(10000)]
+    public sealed class GripRenderProbe : MonoBehaviour
+    {
+        public Transform View;
+        public HandInteractor Hand;
+        public float MaxError;
+        public int Samples;
+        private void LateUpdate()
+        {
+            if (View == null || Hand == null || !Hand.IsHolding) return;
+            MaxError = Mathf.Max(MaxError, Vector3.Distance(View.InverseTransformPoint(Hand.VisibleGripPoint), new Vector3(-.25f, -.25f, .65f)));
+            Samples++;
         }
     }
 }

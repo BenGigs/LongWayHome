@@ -14,6 +14,10 @@ Scenes, input references, player prefab and URP settings are already generated a
 
 ## Five-deck gameplay playtest
 
+Latest carry presentation: automatic climb tucking is removed; the object stays in the normal forward hold, with retraction only for obstructions. Held mesh rendering now follows the camera frame instead of independently interpolated physics bodies. **30/30 PlayMode tests passed** (`TestResults/steady-playmode.xml`), including a LateUpdate check requiring under 2 mm camera-relative visible grip error during walking, original-renderer restoration after release, and the previous movement/carry/socket tests. This supersedes the tucking behavior described in the earlier verification record below. Human feel review remains pending.
+
+The steady-carry Windows build succeeded with Editor exit code 0 (`TestResults/steady-build.log`) and was launched from `Builds/WindowsSteady/TheLongWayHome.exe`.
+
 Carry refinement: tools use a firm grip with a visible 0.18 s reach and 0.28 s retrieval. They tuck closer during climbs and retract near obstructions, retaining world collision. Carried objects no longer detach from the rail distance rule. **29/29 PlayMode tests passed** (`TestResults/carry-final.xml`), including grip-error bounds while walking and looking around during two one-handed climbs, visible reach timing, release/inertia, and battery installation/removal. Human review of pickup and carrying feel remains pending.
 
 The grip-refinement Windows build succeeded with Editor exit code 0 (`TestResults/carry-build.log`) and was launched from `Builds/WindowsGrip/TheLongWayHome.exe`.
@@ -24,7 +28,7 @@ Battery verification: **28/28 PlayMode tests passed** (`TestResults/battery-play
 
 The battery Windows development build succeeded with Editor exit code 0 (`TestResults/battery-build.log`) and was launched from `Builds/WindowsBattery/TheLongWayHome.exe`. Do not rerun `BatteryDeliverySetup.Create`; the fixtures and references are committed in FiveDeckGameplay.
 
-Latest tuning build: `Builds/WindowsGrip/TheLongWayHome.exe` (separate from the prior playtest). Rebuild with the batch Editor entry point `LongWayHome.Editor.FoundationSetup.BuildGripPlaytest`.
+Latest tuning build: `Builds/WindowsSteady/TheLongWayHome.exe` (separate from the prior playtest). Rebuild with the batch Editor entry point `LongWayHome.Editor.FoundationSetup.BuildSteadyPlaytest`.
 
 Flush-rim verification: the full run passed the previous 24 tests; the new crossing check needed a longer traversal interval (`TestResults/flush-playmode.xml`). With the corrected interval and final mesh shading, all 10 ledge tests passed (`TestResults/flush-final.xml`), including same-height ring/deck ray checks and a capsule crossing the rim into a fall. The rendered seam was inspected. Unity generated the replacement continuous rim meshes and scene changes, preserving the deck GUID; metadata/whitespace audits passed.
 
