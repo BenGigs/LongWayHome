@@ -14,6 +14,8 @@ Scenes, input references, player prefab and URP settings are already generated a
 
 ## Five-deck gameplay playtest
 
+Latest table-approach refinement: actual held-collider overlap checks replace chest-directed sphere retraction. The pack lifts just enough to clear nearby tabletops, with surface-normal sliding for taller obstacles. Automatic climb tucking remains removed. **31/31 PlayMode tests passed** (`TestResults/surface-playmode.xml`), including forward/visible/nonpenetrating carry during table approach while looking ahead and down, plus the existing camera-relative jitter, climbing, pickup and socket regressions. Human feel review remains pending.
+
 Latest carry presentation: automatic climb tucking is removed; the object stays in the normal forward hold, with retraction only for obstructions. Held mesh rendering now follows the camera frame instead of independently interpolated physics bodies. **30/30 PlayMode tests passed** (`TestResults/steady-playmode.xml`), including a LateUpdate check requiring under 2 mm camera-relative visible grip error during walking, original-renderer restoration after release, and the previous movement/carry/socket tests. This supersedes the tucking behavior described in the earlier verification record below. Human feel review remains pending.
 
 The steady-carry Windows build succeeded with Editor exit code 0 (`TestResults/steady-build.log`) and was launched from `Builds/WindowsSteady/TheLongWayHome.exe`.
@@ -161,3 +163,5 @@ Remote: [BenGigs/LongWayHome](https://github.com/BenGigs/LongWayHome). The found
 Foundation acceptance: [issue #1](https://github.com/BenGigs/LongWayHome/issues/1). Gravity prototype: [issue #2](https://github.com/BenGigs/LongWayHome/issues/2). Ship blockout: [issue #4](https://github.com/BenGigs/LongWayHome/issues/4).
 
 Next task: playtest the M3 layout before starting M4 navigation and scanning. Walk from the habitat through the workshop to the cockpit, then press G and use the passage rails to travel both ways. Check hatch clearance, tool access and the single pilot seat/berth arrangement. Consoles, crops and the robot bay are space reservations only. See ROADMAP.md.
+
+Table-approach Windows rebuild succeeded with Editor exit code 0 (`TestResults/surface-build.log`), replacing `Builds/WindowsSteady/TheLongWayHome.exe`.

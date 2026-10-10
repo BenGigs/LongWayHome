@@ -56,3 +56,5 @@ User accepted traversal and the flush rims. The next approved M3 interaction tes
 Battery carry feedback: climbing works, but spring lag, visible jitter and rim snags caused unwanted drops. The follow-up replaces the loose spring grip with a firm joint, drives it from physics-space poses, tucks the pack during climbs, retracts near obstacles, and animates visible reaching/retrieval. Intentional release remains immediate; no HUD is added.
 
 User rejected automatic climb tucking and reported persistent visible vibration. Remove that tuck and restore the normal forward hold. Render carried meshes in the same frame as the camera, with physics-based obstruction limits and restored original renderers on release. Add a LateUpdate camera-relative stability test; physics grip-error tests alone did not catch this presentation issue.
+
+Table approach feedback: replace the oversized chest-to-grip sphere retraction with actual collider overlap checks. Lift the pack over nearby table edges and slide along tall obstructions, preserving the forward hold and camera-relative rendering. Automatic climbing tuck remains removed.

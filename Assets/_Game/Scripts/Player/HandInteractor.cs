@@ -30,7 +30,6 @@ namespace LongWayHome.Player
         private Renderer[] carriedRenderers;
         private bool[] rendererStates;
         private Quaternion pickupRotation;
-        private float carryFraction = 1;
         private int originalSolverIterations;
         private int originalVelocityIterations;
         private float carryRadius;
@@ -139,7 +138,7 @@ namespace LongWayHome.Player
                 heldColliders = held.GetComponentsInChildren<Collider>();
                 carryRadius = .1f;
                 foreach (var item in heldColliders)
-                    carryRadius = Mathf.Max(carryRadius, item.bounds.extents.magnitude + Vector3.Distance(item.bounds.center, hit.point));
+                    carryRadius = Mathf.Max(carryRadius, item.bounds.extents.magnitude + Vector3.Distance(item.bounds.center, held.Body.position));
                 SetPlayerCollisionIgnored(true);
                 CreateCarriedVisual();
             }
@@ -194,20 +193,9 @@ namespace LongWayHome.Player
             Vector3 target = IsAnchored ? GripPoint : eye + rotation * restOffset;
             if (held != null && !IsAnchored)
             {
-                Vector3 chest = playerBody.position + playerBody.rotation * Vector3.up * .25f;
                 float t = Mathf.SmoothStep(0, 1, (Time.time - pickupTime - ReachDuration) / RetrieveDuration);
                 target = Vector3.Lerp(playerBody.position + playerBody.rotation * pickupLocal, target, t);
-                // Retract the grip toward the body before the object hits a wall/rim.
-                // Conservative bounds include the offset from the contact point to its centre.
-                Vector3 path = target - chest;
-                float distance = path.magnitude;
-                if (distance > .001f && t > 0)
-                    foreach (var hit in UnityEngine.Physics.SphereCastAll(chest, carryRadius, path / distance, distance, grabLayers, QueryTriggerInteraction.Ignore))
-                    {
-                        if (hit.collider.GetComponentInParent<Grabbable>() == held || hit.collider.attachedRigidbody == playerBody) continue;
-                        target = chest + path.normalized * Mathf.Min(Vector3.Distance(chest, target), Mathf.Max(0, hit.distance - .04f));
-                    }
-                carryFraction = distance > .001f ? Mathf.Clamp01(Vector3.Distance(chest, target) / distance) : 1;
+                target = ResolveCarryAnchor(target, rotation * pickupRotation, playerBody.rotation * Vector3.up);
             }
             handTarget.MovePosition(target);
             handTarget.MoveRotation(rotation);
@@ -223,9 +211,8 @@ namespace LongWayHome.Player
             {
                 float retrieve = Mathf.SmoothStep(0, 1, (Time.time - pickupTime - ReachDuration) / RetrieveDuration);
                 Vector3 anchor = Vector3.Lerp(playerBody.transform.TransformPoint(pickupLocal), view.TransformPoint(restOffset), retrieve);
-                Vector3 chest = playerBody.transform.TransformPoint(Vector3.up * .25f);
-                anchor = Vector3.Lerp(chest, anchor, carryFraction);
                 Quaternion rotation = view.rotation * pickupRotation;
+                anchor = ResolveCarryAnchor(anchor, rotation, playerBody.transform.up);
                 carriedVisual.SetPositionAndRotation(anchor - rotation * Vector3.Scale(localAnchor, carriedVisual.localScale), rotation);
             }
             Vector3 target = carriedVisual != null ? VisibleGripPoint : held != null ? held.transform.TransformPoint(localAnchor) : view.TransformPoint(restOffset);
@@ -238,10 +225,68 @@ namespace LongWayHome.Player
             handVisual.rotation = view.rotation;
         }
 
+        private Vector3 ResolveCarryAnchor(Vector3 anchor, Quaternion rotation, Vector3 up)
+        {
+            Vector3 offset = rotation * Vector3.Scale(localAnchor, held.transform.lossyScale);
+            Vector3 position = anchor - offset;
+            if (!CarryPenetration(position, rotation, out _)) return anchor;
+
+            // A nearby tabletop should lift the pack over its edge, not shorten the
+            // arm toward the stomach. Only actual shape overlap triggers avoidance.
+            for (int step = 1; step <= 14; step++)
+            {
+                Vector3 raised = position + up * (step * .04f);
+                if (!CarryPenetration(raised, rotation, out _))
+                {
+                    float low = (step - 1) * .04f;
+                    float high = step * .04f;
+                    for (int refine = 0; refine < 6; refine++)
+                    {
+                        float middle = (low + high) * .5f;
+                        if (CarryPenetration(position + up * middle, rotation, out _)) low = middle;
+                        else high = middle;
+                    }
+                    return position + up * (high + .008f) + offset;
+                }
+            }
+            // Tall walls/ceilings cannot be cleared by lifting. Slide out along their
+            // surface normal, preserving height at a wall instead of diving inward.
+            for (int step = 0; step < 8; step++)
+            {
+                if (!CarryPenetration(position, rotation, out Vector3 correction)) break;
+                position += correction;
+            }
+            return position + offset;
+        }
+
+        private bool CarryPenetration(Vector3 position, Quaternion rotation, out Vector3 correction)
+        {
+            correction = Vector3.zero;
+            // The sphere is broad phase only: it never determines the carry pose.
+            var nearby = UnityEngine.Physics.OverlapSphere(position, carryRadius, grabLayers, QueryTriggerInteraction.Ignore);
+            float deepest = 0;
+            foreach (var item in heldColliders)
+            {
+                if (item == null || !item.enabled || item.isTrigger) continue;
+                Vector3 partOffset = Quaternion.Inverse(held.transform.rotation) * (item.transform.position - held.transform.position);
+                Quaternion partRotation = Quaternion.Inverse(held.transform.rotation) * item.transform.rotation;
+                foreach (var obstacle in nearby)
+                {
+                    if (obstacle.attachedRigidbody == held.Body || obstacle.attachedRigidbody == playerBody) continue;
+                    if (UnityEngine.Physics.ComputePenetration(item, position + rotation * partOffset, rotation * partRotation,
+                        obstacle, obstacle.transform.position, obstacle.transform.rotation, out Vector3 direction, out float depth) && depth > deepest)
+                    {
+                        deepest = depth;
+                        correction = direction * (depth + .008f);
+                    }
+                }
+            }
+            return deepest > 0;
+        }
+
         private void CreateCarriedVisual()
         {
             pickupRotation = Quaternion.Inverse(view.rotation) * held.Body.rotation;
-            carryFraction = 1;
             carriedVisual = new GameObject(held.name + " held presentation").transform;
             carriedVisual.SetPositionAndRotation(held.Body.position, held.Body.rotation);
             carriedVisual.localScale = held.transform.lossyScale;

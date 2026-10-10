@@ -120,6 +120,45 @@ namespace LongWayHome.Tests
         }
 
         [UnityTest]
+        public IEnumerator TableApproachKeepsPackForwardAndClearOfSurface()
+        {
+            Player.enabled = false;
+            var body = Player.GetComponent<Rigidbody>();
+            var view = Player.GetComponentInChildren<Camera>().transform;
+            var hand = Player.GetComponentsInChildren<HandInteractor>()[0];
+            var motor = Player.GetComponent<PlayerMovement>();
+            body.position = new Vector3(0, 1.05f, 1.1f);
+            yield return new WaitForFixedUpdate();
+            yield return null;
+            yield return GrabAt(view.position + Vector3.forward * .6f);
+            yield return new WaitForSeconds(.7f);
+            foreach (float pitch in new[] { 0f, 40f })
+            {
+                view.rotation = Quaternion.Euler(pitch, 0, 0);
+                motor.SetMovement(Vector2.up);
+                for (int step = 0; step < 60; step++)
+                {
+                    yield return new WaitForFixedUpdate();
+                    yield return null;
+                    Vector3 visible = view.InverseTransformPoint(hand.VisibleGripPoint);
+                    Assert.That(visible.z, Is.GreaterThan(.4f), "The table must not push the pack into the player's body.");
+                    Assert.That(visible.y, Is.GreaterThan(-.28f), "Avoidance must not lower the pack under the normal hold position.");
+                    var presentation = GameObject.Find("Workshop battery held presentation").transform;
+                    var shape = Socket.Battery.GetComponent<Collider>();
+                    foreach (var obstacle in UnityEngine.Physics.OverlapSphere(presentation.position, .4f))
+                    {
+                        if (obstacle.attachedRigidbody == body || obstacle.attachedRigidbody == Socket.Battery.Body || obstacle.isTrigger) continue;
+                        bool overlap = UnityEngine.Physics.ComputePenetration(shape, presentation.position, presentation.rotation,
+                            obstacle, obstacle.transform.position, obstacle.transform.rotation, out _, out float depth);
+                        Assert.That(overlap && depth > .002f, Is.False, "Visible battery must clear the actual table collider.");
+                    }
+                }
+            }
+            motor.SetMovement(Vector2.zero);
+            Assert.That(hand.HeldObject, Is.EqualTo(Socket.Battery));
+        }
+
+        [UnityTest]
         public IEnumerator InputInstallsSecuresRemovesAndResetRestoresBattery()
         {
             Player.enabled = false;
